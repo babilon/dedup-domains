@@ -1,0 +1,5 @@
+,production-cmp.isgprivacy.cbsi.com,,0,e_adaway,DNSBL_Compilation,0
+,r.mradx.net,,0,e_adaway,DNSBL_Compilation,0
+,ravm.tv,,0,e_adaway,DNSBL_Compilation,0
+,sdk.qikify.com,,0,e_adaway,DNSBL_Compilation,0
+,sdk.split.io,,0,e_adaway,DNSBL_Compilation,0
