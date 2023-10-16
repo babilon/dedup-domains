@@ -80,14 +80,12 @@ def read_csv(filename):
         pfb_py_reader = csv.reader(csvinfile, delimiter=',')
         for rows_read, row in enumerate(pfb_py_reader, start=1):
             if not (len(row) == 7 or len(row) == 6):
-                ignored_cnt += 1
                 print("NOTE: Ignoring row with %s columns" % len(row), row)
                 continue
 
             # 7th column is 0, 1 or 2
             match_strength = int(row[6]) if len(row) == 7 else 0
             if not (match_strength >= 0 or match_strength <= 2):
-                ignored_cnt += 1
                 print("NOTE: Ignoring row with unrecognized value for 7th column: %d (expected >= 0 and <= 2)" % match_strength)
                 continue
 
