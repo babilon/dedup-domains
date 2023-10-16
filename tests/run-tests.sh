@@ -20,6 +20,7 @@ ret=$?
 if [[ $ret -eq 0 ]]; then
     echo "001 standard: zero diffences"
 else
+    echo "001 standard: differences :-/ diff returned $ret"
     exit 1
 fi
 
@@ -33,6 +34,7 @@ ret=$?
 if [[ $ret -eq 0 ]]; then
     echo "001 pointer: zero diffences"
 else
+    echo "001 pointer: differences :-/ diff returned $ret"
     exit 1
 fi
 
@@ -52,5 +54,6 @@ ret=$?
 if [[ $ret -eq 0 ]]; then
     echo "001 standard vs. pointer: zero diffences"
 else
+    echo "001 standard vs. pointer: differences :-/ diff returned $ret"
     exit 1
 fi
