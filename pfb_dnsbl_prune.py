@@ -166,12 +166,10 @@ class DomainTree:
 
 def read_csv(filename, outputfile):
     global domainTree
-    linesread = 0
     regexlines = 0
     inserted_cnt = 0
     omitted_cnt = 0
     ignored_cnt = 0
-    cur_row_idx = -1
 
     log("Enter read_csv() with args:", filename, outputfile)
 
@@ -180,8 +178,7 @@ def read_csv(filename, outputfile):
         pfb_py_reader = csv.reader(csvinfile, delimiter=',')
         pfb_py_writer = csv.writer(csvoutfile, delimiter=',',
                 quotechar="'", lineterminator='\n')
-        for row in pfb_py_reader:
-            cur_row_idx += 1
+        for cur_row_idx, row in enumerate(pfb_py_reader):
             if not (len(row) == 7 or len(row) == 6):
                 ignored_cnt += 1
                 log("NOTE: Ignoring row with %s columns" % len(row), row)
@@ -206,8 +203,7 @@ def read_csv(filename, outputfile):
                 pfb_py_writer.writerow(row)
                 regexlines += 1
 
-            linesread += 1
-
+    linesread = (cur_row_idx + 1) - ignored_cnt
     log("\tProcessed %s and found %d row%s of which %d %s regex." % \
             (filename, linesread, '' if linesread == 1 else 's', \
                 regexlines, 'is a' if regexlines == 1 else 'are'))
