@@ -78,7 +78,7 @@ def read_csv(filename):
     rows_read = 0
     with (open(filename, 'r', newline='') as csvinfile):
         pfb_py_reader = csv.reader(csvinfile, delimiter=',')
-        for row in pfb_py_reader:
+        for rows_read, row in enumerate(pfb_py_reader, start=1):
             if not (len(row) == 7 or len(row) == 6):
                 ignored_cnt += 1
                 print("NOTE: Ignoring row with %s columns" % len(row), row)
@@ -97,7 +97,6 @@ def read_csv(filename):
             else:
                 # do not modify the regex rows
                 regexlines.append(row)
-            rows_read += 1
 
     print("read %d rows from csv" % rows_read)
     max_domain_segments = current_max
