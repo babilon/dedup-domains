@@ -11,7 +11,7 @@ echo "Clear test artifacts"
 /usr/bin/rm -rf ./test_pointer_sorted; /usr/bin/mkdir ./test_pointer_sorted
 
 echo -e "\nRun prune with standard method"
-time /usr/bin/python3 ../pfb_dnsbl_prune.py ./001_inputs .fat .pruned standard
+time /usr/bin/python3 ../pfb_dnsbl_prune.py ./001_inputs .fat .pruned --method standard
 echo "Compare standard output to benchmark:"
 /usr/bin/mv ./001_inputs/*.pruned ./test_standard_out/
 /usr/bin/find ./test_standard_out -type f -name '*.pruned' | /usr/bin/rename 's/\.pruned$/.txt/'
@@ -24,7 +24,7 @@ else
 fi
 
 echo -e "\nRun prune with pointer method"
-time /usr/bin/python3 ../pfb_dnsbl_prune.py ./001_inputs .fat .pruned pointer
+time /usr/bin/python3 ../pfb_dnsbl_prune.py ./001_inputs .fat .pruned --method pointer
 echo -e "\nCompare pointer output to benchmark:"
 /usr/bin/mv ./001_inputs/*.pruned ./test_pointer_out/
 /usr/bin/find -type f -name '*.pruned' | /usr/bin/rename 's/\.pruned$/.txt/'

@@ -1,0 +1,7 @@
+,adjust.io,,0,g_disconnect_track,DNSBL_Compilation,0
+,airbrake.io,,0,g_disconnect_track,DNSBL_Compilation,0
+,bango.combango.org,,0,g_disconnect_track,DNSBL_Compilation,0
+,custom-blacklisted-tracking-example.com,,0,g_disconnect_track,DNSBL_Compilation,0
+,do-not-tracker.org,,0,g_disconnect_track,DNSBL_Compilation,0
+,eviltracker.net,,0,g_disconnect_track,DNSBL_Compilation,0
+,trackersimulator.org,,0,g_disconnect_track,DNSBL_Compilation,0
