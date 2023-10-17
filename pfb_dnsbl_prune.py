@@ -264,10 +264,10 @@ class CsvWriters:
             f.close()
 
     def write(self, listname, csv_row):
-        csvwriter = self.csvwriters.get(listname)
-        if csvwriter is not None:
+        try:
+            csvwriter = self.csvwriters[listname]
             csvwriter.writerow(csv_row)
-        else:
+        except KeyError:
             log("csv writer for '%s' was not found!" % listname)
 
 def write_DomainInfos(files_to_read, files_to_write):
@@ -285,14 +285,14 @@ def write_DomainPointers(files_to_read, files_to_write):
     file_refs = dict((fn, []) for fn in files_to_read.keys())
 
     def visitor(x):
-        file_refs.get(x.listname).append(x.file_row)
+        file_refs[x.listname].append(x.file_row)
     domainTree.visit_leaves(lambda x: visitor(x))
 
     log("Writing pruned contents to '*%s' files..." % out_ext)
     with (CsvWriters(files_to_write) as csvwriters,
             CsvReaders(files_to_read) as readers):
         for fn in file_refs.keys():
-            for i in sorted(file_refs.get(fn)):
+            for i in sorted(file_refs[fn]):
                 csvwriters.write(fn,
                         readers.readline(fn, i))
 
@@ -347,7 +347,7 @@ if __name__ == '__main__':
         out_ext = sys.argv[3]
 
     if num_args > 4 and (sys.argv[4] == 'standard' or sys.argv[4] == 'pointer'):
-        (DomainType, write_csv) = dataHandlers.get(sys.argv[4])
+        (DomainType, write_csv) = dataHandlers[sys.argv[4]]
 
     log("Trim '*%s' files in '%s' and write as '*%s'." \
             % (in_ext, directory, out_ext))
