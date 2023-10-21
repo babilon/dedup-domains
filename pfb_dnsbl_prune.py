@@ -335,15 +335,12 @@ class CsvWriters:
 def write_DomainInfos(files_to_read, files_to_write, out_ext):
     global domainTree
 
-    print("write domain infos")
     log("Writing pruned contents to '*%s' files..." % out_ext)
     with CsvWriters(files_to_write) as csvwriters:
-        print("write files begin for file")
         def visitor(x):
             if x.alive_and_well:
                 csvwriters.write(x.listname, x.csv_row)
         domainTree.visit_leaves(lambda x: visitor(x))
-        print("finished writing")
 
 def write_DomainPointers(files_to_read, files_to_write, out_ext):
     global domainTree
@@ -385,7 +382,6 @@ def process_directory(dirpath, in_ext, out_ext):
 
     prune_regex_matches()
 
-    print("begin writing files")
     if len(files_to_read) and len(files_to_write):
         write_csv(files_to_read, files_to_write, out_ext)
 
