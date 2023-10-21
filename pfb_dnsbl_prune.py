@@ -411,9 +411,6 @@ if __name__ == '__main__':
     parser.add_argument("--prune-regex", action="store_true",
             help="Prune domains matching regexes found in the input files")
 
-    parser.add_argument("--threaded", action="store_true",
-            help="Use multiple threads to prune regex matches. Note: it's slow.")
-
     parser.add_argument("--log", type=str, nargs='?',
             const='./pfb_dnsbl_prune.log', default=None,
             help="Enable log; default is './pfb_dnsbl_prune.log'")
