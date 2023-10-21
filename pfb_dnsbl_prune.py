@@ -231,6 +231,7 @@ def read_csv(filename, outputfile):
     omitted_cnt = 0
     ignored_cnt = 0
     regexlines = 0
+    cur_row_idx = -1
 
     log("Enter read_csv() with args:", filename, outputfile)
 
