@@ -1,0 +1,2 @@
+,www.somedomain.com,,0,samplebug,DNSBL_Compilation,0
+,somedomain.com,,0,samplebug,DNSBL_Compilation,0

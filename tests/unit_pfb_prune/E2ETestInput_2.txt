@@ -1,0 +1,3 @@
+,01proxy.notlong.com,,0,samplebug,DNSBL_Compilation,1
+,notlong.com,,0,samplebug,DNSBL_Compilation,1
+

@@ -1,0 +1,8 @@
+SRC_DIR_SOURCE := main.c \
+		  csvline.c \
+		  domain.c \
+		  domaintree.c \
+		  rw_pfb_csv.c \
+		  pfb_prune.c
+
+SRC += $(addprefix src/, $(SRC_DIR_SOURCE))

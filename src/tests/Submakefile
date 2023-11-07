@@ -1,0 +1,4 @@
+SRC_TESTS_SOURCE := test.c \
+		    codecoverage.c \
+
+SRCTEST += $(addprefix src/tests/, $(SRC_TESTS_SOURCE))

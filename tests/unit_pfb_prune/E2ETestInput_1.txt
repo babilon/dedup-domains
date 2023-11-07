@@ -1,0 +1,11 @@
+,0--foodwarez.da.ru,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,0-24bpautomentes.hu,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,0-29.com,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,0-day.us,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,0.101tubeporn.com,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,0.code.cotsta.ru,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,000.gaysexe.free.fr,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,000.ueuo.com,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,0001.2waky.com,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,0001proxy.notlong.com,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,0001proxy.notlong.com,,0,acan_oisd_ABP,DNSBL_Compilation,1
