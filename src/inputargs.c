@@ -758,13 +758,13 @@ static void test_duped_args()
     input_args_t args;
     init_input_args(&args);
 
-    char *arg1[] = {"dir1.real", "-d", "./tests/001_inputs", "-i", "100", "-r", "500", "-x", ".xyz", "-i" "10"};
+    char *arg1[] = {"dir1.real", "-d", "./tests/001_inputs", "-i", "100", "-r", "500", "-x", ".xyz", "-i", "10"};
     TC_DPIA(11, arg1, args, false);
 
-    char *arg2[] = {"dir2.real", "-d", "./tests/001_inputs", "-r", "100", "-i", "500", "-r", "20", "-o" ".wat"};
+    char *arg2[] = {"dir2.real", "-d", "./tests/001_inputs", "-r", "100", "-i", "500", "-r", "20", "-o", ".wat"};
     TC_DPIA(11, arg2, args, false);
 
-    char *arg3[] = {"dir3.real", "-d", "./tests/001_inputs", "-$", "-i", "500", "-r", "20", "-o" ".wat"};
+    char *arg3[] = {"dir3.real", "-d", "./tests/001_inputs", "-$", "-i", "500", "-r", "20", "-o", ".wat"};
     TC_DPIA(11, arg3, args, false);
 
     free_input_args(&args);
