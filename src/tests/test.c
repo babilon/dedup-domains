@@ -28,7 +28,7 @@
 #include "pfb_prune.h"
 #include "test.h"
 
-static void do_test_end2end(const int argc, const char **argv_i);
+static void do_test_end2end(const int argc, char *const *argv_i);
 
 /**
  * Full end to end test with an empty output file b/c all of its inputs are
@@ -36,7 +36,7 @@ static void do_test_end2end(const int argc, const char **argv_i);
  */
 static void test_end2end()
 {
-    char const *argv_i[] = {"tests/unit_pfb_prune/E2ETestInput_1.txt",
+    char *const argv_i[] = {"tests/unit_pfb_prune/E2ETestInput_1.txt",
                             "tests/unit_pfb_prune/E2ETestInput_2.txt",
                             "tests/unit_pfb_prune/E2ETestInput_3.txt"};
 
@@ -45,7 +45,7 @@ static void test_end2end()
     ADD_TCC;
 }
 
-static void do_test_end2end(const int argc, const char **argv_i)
+static void do_test_end2end(const int argc, char *const *argv_i)
 {
     bool use_shared_buffer = true;
 
@@ -113,6 +113,7 @@ void run_tests()
     test_DomainTree();
     test_rw_pfb_csv();
     test_pfb_prune();
+    test_input_args();
     printf("OK.\n");
     printf("Printing info of structs...\n");
     info_csvline();

@@ -79,7 +79,7 @@ typedef struct ArrayDomainInfo
 } ArrayDomainInfo_t;
 
 extern pfb_contexts_t pfb_init_contexts(size_t alloc_contexts, const char *out_ext,
-        const char *const *argv);
+        char *const * argv);
 
 extern size_t pfb_len_contexts(pfb_contexts_t *cs);
 extern void pfb_free_contexts(pfb_contexts_t *cs);

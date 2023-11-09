@@ -35,6 +35,7 @@ void set_DomainInfo_array_size(int v)
     if(v > 0)
     {
         INITIAL_ARRAY_DOMAIN_INFO = v;
+        ADD_CC;
     }
     else
     {
@@ -47,6 +48,7 @@ void set_realloc_DomainInfo_size(int v)
     if(v > 0)
     {
         REALLOC_ARRAY_DOMAIN_INFO = v;
+        ADD_CC;
     }
     else
     {
@@ -220,7 +222,7 @@ size_t pfb_len_contexts(pfb_contexts_t *cs)
 }
 
 pfb_contexts_t pfb_init_contexts(size_t alloc_contexts, const char *out_ext,
-        const char * const *argv)
+        char *const * argv)
 {
     ASSERT(out_ext);
     ASSERT(argv);
@@ -846,8 +848,8 @@ static void test_pfb_close_context()
     // close on zero'ed context is safe
     pfb_close_context(&pfbc);
 
-    char const *argv_i[] = {"FileInput_1.txt", "Zoo_2.txt", "Blarg.txt"};
-    char const **argi = argv_i;
+    char *const argv_i[] = {"FileInput_1.txt", "Zoo_2.txt", "Blarg.txt"};
+    char *const *argi = argv_i;
 
     pfb_contexts_t pfbcs = pfb_init_contexts(3, ".work", argv_i);
 
@@ -863,8 +865,8 @@ static void test_pfb_close_context()
 
 static void test_pfb_init_contexts()
 {
-    char const *argv_i[] = {"FileInput_1.txt", "Zoo_2.txt", "Blarg.txt"};
-    char const *argv_o[] = {"FileInput_1.work", "Zoo_2.work", "Blarg.work"};
+    char *const argv_i[] = {"FileInput_1.txt", "Zoo_2.txt", "Blarg.txt"};
+    char *const argv_o[] = {"FileInput_1.work", "Zoo_2.work", "Blarg.work"};
 
     pfb_contexts_t pfbcs, pfbcs_zero;
     memset(&pfbcs_zero, 0, sizeof(pfb_contexts_t));
@@ -882,8 +884,8 @@ static void test_pfb_init_contexts()
     assert(pfbcs.begin_context->dt);
     assert(pfbcs.begin_context->dt[0] == NULL);
 
-    char const **argi = argv_i;
-    char const **argo = argv_o;
+    char *const *argi = argv_i;
+    char *const *argo = argv_o;
     for(pfb_context_t *c = pfbcs.begin_context; c != pfbcs.end_context;
             c++, ++argi)
     {
@@ -911,7 +913,7 @@ static void test_pfb_init_contexts()
 
 static void test_pfb_len_contexts()
 {
-    char const *argi[] = {"FileInput_1.txt", "Zoo_2.txt", "Blarg.txt"};
+    char *const argi[] = {"FileInput_1.txt", "Zoo_2.txt", "Blarg.txt"};
 
     pfb_contexts_t pfbcs, pfbcs_zero;
     memset(&pfbcs, 0, sizeof(pfb_contexts_t));
@@ -961,11 +963,11 @@ static void test_pfb_len_contexts()
 
 static void test_pfb_open_context()
 {
-    char const *argv_i[] = {"tests/unit_pfb_prune/FileInput_1.txt",
+    char *const argv_i[] = {"tests/unit_pfb_prune/FileInput_1.txt",
                             "tests/unit_pfb_prune/Zoo_2.txt",
                             "tests/unit_pfb_prune/Blarg.txt"};
 
-    char const *argv_o[] = {"tests/unit_pfb_prune/FileInput_1.work",
+    char *const argv_o[] = {"tests/unit_pfb_prune/FileInput_1.work",
                             "tests/unit_pfb_prune/Zoo_2.work",
                             "tests/unit_pfb_prune/Blarg.work"};
 
@@ -1023,7 +1025,7 @@ static void test_pfb_open_context()
 
 void test_pfb_flush_context()
 {
-    char const *argv_i[] = {"tests/unit_pfb_prune/FileInput_1.txt",
+    char *const argv_i[] = {"tests/unit_pfb_prune/FileInput_1.txt",
                             "tests/unit_pfb_prune/Zoo_2.txt",
                             "tests/unit_pfb_prune/Blarg.txt"};
 
@@ -1165,12 +1167,12 @@ static void test_cb1_read_pfb_csv(PortLineData_t const *const pld, pfb_context_t
 
 static void test_read_pfb_csv()
 {
-    char const *argv_i[] = {"tests/unit_pfb_prune/FileInput_2.txt",
+    char *const argv_i[] = {"tests/unit_pfb_prune/FileInput_2.txt",
                             "tests/unit_pfb_prune/Zoo_2.txt",
                             "tests/unit_pfb_prune/Blarg.txt"};
 
     /*
-    char const *argv_o[] = {"tests/unit_pfb_prune/FileInput_2.bench",
+    char *const argv_o[] = {"tests/unit_pfb_prune/FileInput_2.bench",
                             "tests/unit_pfb_prune/Zoo_2.work",
                             "tests/unit_pfb_prune/Blarg.work"};
                             */
@@ -1219,7 +1221,7 @@ static void test_cb2_read_pfb_csv(PortLineData_t const *const pld, pfb_context_t
  */
 static void test_read_pfb_csv_NONEWLINE()
 {
-    char const *argv_i[] = {"tests/unit_pfb_prune/gen_read_pfb_csv_NONEWLINE_input.txt"};
+    char *const argv_i[] = {"tests/unit_pfb_prune/gen_read_pfb_csv_NONEWLINE_input.txt"};
 
     FILE *f_out = fopen(argv_i[0], "wb");
 
@@ -1279,7 +1281,7 @@ static void test_cb3_read_pfb_csv(PortLineData_t const *const pld, pfb_context_t
  */
 static void test_read_pfb_csv_LONGLINE()
 {
-    char const *argv_i[] = {"tests/unit_pfb_prune/gen_read_pfb_csv_LONGLINE_input.txt"};
+    char *const argv_i[] = {"tests/unit_pfb_prune/gen_read_pfb_csv_LONGLINE_input.txt"};
 
     FILE *f_out = fopen(argv_i[0], "wb");
 
@@ -1335,7 +1337,7 @@ static void test_cb4_read_pfb_csv(PortLineData_t const *const pld, pfb_context_t
  */
 static void test_read_pfb_csv_ONELINE()
 {
-    char const *argv_i[] = {"tests/unit_pfb_prune/gen_read_pfb_csv_ONELINE_input.txt"};
+    char *const argv_i[] = {"tests/unit_pfb_prune/gen_read_pfb_csv_ONELINE_input.txt"};
 
     FILE *f_out = fopen(argv_i[0], "wb");
 
@@ -1369,7 +1371,7 @@ static void test_read_pfb_csv_ONELINE()
 
 static void test_read_pfb_csv_NEWLINES()
 {
-    char const *argv_i[] = {"tests/unit_pfb_prune/gen_read_pfb_csv_NEWLINES_input.txt"};
+    char *const argv_i[] = {"tests/unit_pfb_prune/gen_read_pfb_csv_NEWLINES_input.txt"};
 
     FILE *f_out = fopen(argv_i[0], "wb");
 
@@ -1416,7 +1418,7 @@ static void test_cb5_read_pfb_csv(PortLineData_t const *const pld, pfb_context_t
 
 static void test_read_pfb_csv_TWOBETWEEN()
 {
-    char const *argv_i[] = {"tests/unit_pfb_prune/gen_read_pfb_csv_TWOBETWEEN_input.txt"};
+    char *const argv_i[] = {"tests/unit_pfb_prune/gen_read_pfb_csv_TWOBETWEEN_input.txt"};
 
     FILE *f_out = fopen(argv_i[0], "wb");
 
@@ -1545,7 +1547,7 @@ void info_pfb_prune()
 
 static void test_pfb_insert()
 {
-    char const *argv_i[] = {"tests/unit_pfb_prune/FileInput_1.txt"};
+    char *const argv_i[] = {"tests/unit_pfb_prune/FileInput_1.txt"};
     pfb_contexts_t pfbc = pfb_init_contexts(1, ".work", argv_i);
 
     // opens the output file for writing which will wipe it of anything that
@@ -1582,7 +1584,7 @@ static void test_pfb_insert()
 
 static void test_pfb_insert_0()
 {
-    char const *argv_i[] = {"tests/unit_pfb_prune/FileInput_1.txt"};
+    char *const argv_i[] = {"tests/unit_pfb_prune/FileInput_1.txt"};
     pfb_contexts_t pfbc = pfb_init_contexts(1, ".work", argv_i);
 
     pfb_open_context(pfbc.begin_context, false);
@@ -1618,7 +1620,7 @@ static void test_pfb_insert_0()
 
 static void test_pfb_insert_1()
 {
-    char const *argv_i[] = {"tests/unit_pfb_prune/FileInput_1.txt"};
+    char *const argv_i[] = {"tests/unit_pfb_prune/FileInput_1.txt"};
     pfb_contexts_t pfbc = pfb_init_contexts(1, ".work", argv_i);
 
     pfb_open_context(pfbc.begin_context, false);
@@ -1654,7 +1656,7 @@ static void test_pfb_insert_1()
 
 static void test_pfb_insert_2()
 {
-    char const *argv_i[] = {"tests/unit_pfb_prune/FileInput_1.txt"};
+    char *const argv_i[] = {"tests/unit_pfb_prune/FileInput_1.txt"};
     pfb_contexts_t pfbc = pfb_init_contexts(1, ".work", argv_i);
 
     pfb_open_context(pfbc.begin_context, false);
@@ -1688,7 +1690,7 @@ static void test_pfb_insert_2()
 
 static void test_pfb_insert_fewcols()
 {
-    char const *argv_i[] = {"tests/unit_pfb_prune/FileInput_1.txt"};
+    char *const argv_i[] = {"tests/unit_pfb_prune/FileInput_1.txt"};
     pfb_contexts_t pfbc = pfb_init_contexts(1, ".work", argv_i);
 
     pfb_open_context(pfbc.begin_context, false);
@@ -1733,7 +1735,7 @@ static void cb_do_nothing(PortLineData_t const *const pld, pfb_context_t *pc,
 
 static void test_pfb_read_line_ZERO()
 {
-    char const *argv_i[] = {"tests/unit_pfb_prune/FileInput_1.txt"};
+    char *const argv_i[] = {"tests/unit_pfb_prune/FileInput_1.txt"};
     pfb_contexts_t pfbc = pfb_init_contexts(1, ".work", argv_i);
 
     pfb_open_context(pfbc.begin_context, false);
