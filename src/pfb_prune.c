@@ -39,7 +39,7 @@ void set_DomainInfo_array_size(int v)
     }
     else
     {
-        fprintf(stderr, "WARNING: ignoring user specified buffer size %d; using default.\n", v);
+        ELOG_STDERR("WARNING: ignoring user specified buffer size %d; using default.\n", v);
     }
 }
 
@@ -52,7 +52,7 @@ void set_realloc_DomainInfo_size(int v)
     }
     else
     {
-        fprintf(stderr, "WARNING: ignoring user specified realloc size %d; using default.\n", v);
+        ELOG_STDERR("WARNING: ignoring user specified realloc size %d; using default.\n", v);
     }
 }
 
@@ -64,14 +64,14 @@ static char* pfb_strdup(const char *in)
 {
     if(!in)
     {
-        fprintf(stderr, "Input string must be non-nil\n");
+        ELOG_STDERR("Input string must be non-nil\n");
         return NULL;
     }
 
     size_t in_size = strlen(in);
     if(!in_size)
     {
-        fprintf(stderr, "Input string must be non-empty\n");
+        ELOG_STDERR("Input string must be non-empty\n");
         return NULL;
     }
 
@@ -92,14 +92,14 @@ char* outputfilename(const char *input, const char *ext)
 {
     if(!input || !ext)
     {
-        fprintf(stderr, "Input filename and extension must be non-nil\n");
+        ELOG_STDERR("Input filename and extension must be non-nil\n");
         ADD_CC;
         return NULL;
     }
 
     if(!*input || !*ext)
     {
-        fprintf(stderr, "Input filename and extension must be non-empty\n");
+        ELOG_STDERR("Input filename and extension must be non-empty\n");
         ADD_CC;
         return NULL;
     }
@@ -159,7 +159,7 @@ void pfb_insert(PortLineData_t const *const pld, pfb_context_t *pfbc, void *cont
 
     if(!update_DomainView(&pfbc->dv, cv_1.data, cv_1.len))
     {
-        fprintf(stderr, "ERROR: failed to update DomainView; possibly garbage input. insert skipped.\n");
+        ELOG_STDERR("ERROR: failed to update DomainView; possibly garbage input. insert skipped.\n");
         return;
     }
 
@@ -181,7 +181,7 @@ void pfb_insert(PortLineData_t const *const pld, pfb_context_t *pfbc, void *cont
         if(cv_6.len > 1)
         {
             // undefined / unsupported.
-            fprintf(stderr, "WARNING: line has bogus unsupported value in column 7: %.*s\n",
+            ELOG_STDERR("WARNING: line has bogus unsupported value in column 7: %.*s\n",
                     (int)cv_6.len, cv_6.data);
             // flag line bogus to skip further processing
             pfbc->dv.match_strength = MATCH_BOGUS;
@@ -274,7 +274,7 @@ void pfb_open_context(pfb_context_t *c, bool append_output)
 
     if(c->in_file)
     {
-        fprintf(stderr, "ERROR: INPUT file is already open: %s\n",
+        ELOG_STDERR("ERROR: INPUT file is already open: %s\n",
                 c->in_fname);
         ASSERT(false && "ERROR: INPUT file is already open");
         return;
@@ -282,7 +282,7 @@ void pfb_open_context(pfb_context_t *c, bool append_output)
 
     if(c->out_file)
     {
-        fprintf(stderr, "ERROR: OUTPUT file is already open: %s\n",
+        ELOG_STDERR("ERROR: OUTPUT file is already open: %s\n",
                 c->in_fname);
         ASSERT(false && "ERROR: OUTPUT file is already open");
         return;
@@ -291,7 +291,7 @@ void pfb_open_context(pfb_context_t *c, bool append_output)
     c->in_file = fopen(c->in_fname, "rb");
     if(!c->in_file)
     {
-        fprintf(stderr, "ERROR: failed to open file for reading in binary mode: %s\n",
+        ELOG_STDERR("ERROR: failed to open file for reading in binary mode: %s\n",
                 c->in_fname);
         ASSERT(false && "ERROR: failed to open file for reading in binary mode");
         return;
@@ -300,7 +300,7 @@ void pfb_open_context(pfb_context_t *c, bool append_output)
     c->out_file = fopen(c->out_fname, append_output ? "ab" : "wb");
     if(!c->out_file)
     {
-        fprintf(stderr, "ERROR: failed to open file for writing in binary mode: %s\n",
+        ELOG_STDERR("ERROR: failed to open file for writing in binary mode: %s\n",
                 c->out_fname);
         ASSERT(false && "ERROR: failed to open file for writing in binary mode");
         return;
@@ -314,7 +314,7 @@ void pfb_flush_out_context(pfb_context_t *c)
     ASSERT(c);
     if(!c->out_file)
     {
-        fprintf(stderr, "ERROR: ignoring call to flush on a nil file pointer: %s\n",
+        ELOG_STDERR("ERROR: ignoring call to flush on a nil file pointer: %s\n",
                 c->in_fname);
         return;
     }
@@ -363,7 +363,7 @@ void pfb_free_contexts(pfb_contexts_t *cs)
         if(cs->begin_context->dt && cs->begin_context->dt[0])
         {
             // unexpected though not harmful situation.
-            fprintf(stderr, "WARNING: domain tree is still set on context pfb_free_context()\n");
+            ELOG_STDERR("WARNING: domain tree is still set on context pfb_free_context()\n");
 
             free_DomainTree(&cs->begin_context->dt[0]);
             cs->begin_context->dt[0] = NULL;
@@ -428,26 +428,24 @@ void init_ArrayDomainInfo(ArrayDomainInfo_t *array_di, const size_t alloc_contex
 
     if(alloc_contexts == 0)
     {
-        fprintf(stderr, "ERROR: request to allocate zero context elements.\n");
+        ELOG_STDERR("ERROR: request to allocate zero context elements.\n");
         return;
     }
 
     if(INITIAL_ARRAY_DOMAIN_INFO == 0)
     {
-        fprintf(stderr, "ERROR: request to allocate zero DomainInfo elements.\n");
+        ELOG_STDERR("ERROR: request to allocate zero DomainInfo elements.\n");
         return;
     }
 
     if(alloc_contexts > UINT_MAX)
     {
-        fprintf(stderr, "WARNING: allocating over UINT_MAX context elements.\n");
-        fflush(stderr);
+        ELOG_STDERR("WARNING: allocating over UINT_MAX context elements.\n");
     }
 
     if(INITIAL_ARRAY_DOMAIN_INFO > UINT_MAX)
     {
-        fprintf(stderr, "WARNING: allocating more than UINT_MAX DomainInfo elements.\n");
-        fflush(stderr);
+        ELOG_STDERR("WARNING: allocating more than UINT_MAX DomainInfo elements.\n");
     }
 
     array_di->begin_pfb_context = NULL;
@@ -507,19 +505,13 @@ void free_ArrayDomainInfo(ArrayDomainInfo_t *array_di)
         free(array_di->cd[i].linenumbers);
 #endif
 #ifdef COLLECT_DIAGNOSTICS
-        BORROW_SPACES;
-        printf("[%s:%s] ContextDomain %p 'linenumbers' buffer\n",
-                __FILE__, __FUNCTION__,
-                &(array_di->cd[i]));
-        printf(" %s   realloc'ed %u times to final size of %u with %u used.\n",
-                spaces_str,
+        LOG_DIAG("ContextDomain's 'linenumbers'", &(array_di->cd[i]),
+                "realloc'ed %u times to final size of %u with %u used.\n",
                 (uint)array_di->cd[i].count_realloc_linenumbers,
                 (uint)array_di->cd[i].alloc_linenumbers,
                 (uint)array_di->cd[i].next);
-        printf(" %s   Input file: %s\n\n",
-                spaces_str,
+        LOG_DIAG_CONT("Input file: %s\n\n",
                 array_di->begin_pfb_context[i].in_fname);
-        RETURN_SPACES;
 #endif
         ADD_CC;
     }
@@ -578,7 +570,7 @@ static void collect_DomainInfo(DomainInfo_t **di, void *context)
         {
             free(cd->di);
             cd->di = NULL;
-            fprintf(stderr, "ERROR: failed to realloc DomainInfo_t* array\n");
+            ELOG_STDERR("ERROR: failed to realloc DomainInfo_t* array\n");
             exit(EXIT_FAILURE);
         }
 #else
@@ -593,7 +585,7 @@ static void collect_DomainInfo(DomainInfo_t **di, void *context)
         {
             free(cd->linenumbers);
             cd->linenumbers = NULL;
-            fprintf(stderr, "ERROR: failed to realloc linenumbers array\n");
+            ELOG_STDERR("ERROR: failed to realloc linenumbers array\n");
             exit(EXIT_FAILURE);
         }
 #endif
@@ -690,13 +682,13 @@ void pfb_consolidate(DomainTree_t **root_dt, ArrayDomainInfo_t *array_di)
     {
 #ifdef REGEX_ENABLED
 #ifdef DEBUG
-        printf("sorting. before sort the line numbers in order are:\n");
+        DEBUG_PRINTF("sorting. before sort the line numbers in order are:\n");
         for(size_t l = 0; l < array_di->cd[i].next; l++)
         {
             ASSERT(l < array_di->cd[i].next);
             ASSERT(l < array_di->cd[i].alloc_linenumbers);
             ASSERT(array_di->cd[i].di[i]->linenumber > 0);
-            printf("\t%d\n", array_di->cd[i].di[l]->linenumber);
+            DEBUG_PRINTF("\t%d\n", array_di->cd[i].di[l]->linenumber);
         }
 #endif
         ASSERT(i < array_di->len_cd);
@@ -704,12 +696,12 @@ void pfb_consolidate(DomainTree_t **root_dt, ArrayDomainInfo_t *array_di)
                 sizeof(DomainInfo_t*), sort_DomainInfo);
 #else
 #ifdef DEBUG
-        printf("sorting. before sort the line numbers in order are:\n");
+        DEBUG_PRINTF("sorting. before sort the line numbers in order are:\n");
         for(size_t l = 0; l < array_di->cd[i].next; l++)
         {
             ASSERT(l < array_di->cd[i].next);
             ASSERT(l < array_di->cd[i].alloc_linenumbers);
-            printf("\t%d\n", array_di->cd[i].linenumbers[l]);
+            DEBUG_PRINTF("\t%d\n", array_di->cd[i].linenumbers[l]);
         }
 #endif
 
@@ -718,13 +710,13 @@ void pfb_consolidate(DomainTree_t **root_dt, ArrayDomainInfo_t *array_di)
                 sizeof(linenumber_t), sort_LineNumbers);
 
 #ifdef DEBUG
-        printf("sorted. after sort the line numbers in order are:\n");
+        DEBUG_PRINTF("sorted. after sort the line numbers in order are:\n");
         for(size_t l = 0; l < array_di->cd[i].next; l++)
         {
             ASSERT(i < array_di->len_cd);
             ASSERT(l < array_di->cd[i].next);
             ASSERT(l < array_di->cd[i].alloc_linenumbers);
-            printf("\t%d\n", array_di->cd[i].linenumbers[l]);
+            DEBUG_PRINTF("\t%d\n", array_di->cd[i].linenumbers[l]);
         }
 #endif
 #endif

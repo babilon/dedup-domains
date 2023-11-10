@@ -27,50 +27,81 @@
 #define LOG_IFARGS(args, fmt, ...) do { \
     if(!silent_mode(args)) { \
         open_logfile(args); \
-        fprintf(args->outFile, fmt, ##__VA_ARGS__); \
+        fprintf(get_logFile(args), fmt, ##__VA_ARGS__); \
         close_logfile(args); \
     } \
 } while(0)
 
 #define ELOG_IFARGS(args, fmt, ...) do { \
     open_logfile(args); \
-    fprintf(args->errFile, fmt, ##__VA_ARGS__); \
+    fprintf(get_elogFile(args), fmt, ##__VA_ARGS__); \
     close_logfile(args); \
 } while(0)
 
-#define ELOG_STDERR(fmt, ...) do { \
-    fprintf(stderr, fmt, ##__VA_ARGS__); \
-} while(0)
+#ifdef BUILD_TESTS
+#define TESTS_PRINTF
+#endif
 
 #define PATH_SEP_CHAR '/'
 
 extern char* outputfilename(const char *input, const char *ext);
 
-void open_logfile(input_args_t *iargs)
+bool open_logfile(input_args_t *iargs)
 {
     if(iargs->log_fname)
     {
         iargs->outFile = fopen(iargs->log_fname, "ab");
-        //iargs->errFile = iargs->outFile;
-        ADD_CC;
+        if(!iargs->outFile)
+        {
+            iargs->outFile = stdout;
+            fprintf(stderr, "ERROR: Unable to open %s for append writing.\n", iargs->log_fname);
+        }
+        else
+        {
+            iargs->errFile = iargs->outFile;
+            ADD_CC;
+            return true;
+        }
     }
     ADD_CC;
+
+    return false;
 }
 
 void close_logfile(input_args_t *iargs)
 {
     if(iargs->log_fname)
     {
-        if(iargs->outFile)
-        {
-            fclose(iargs->outFile);
-            ADD_CC;
-        }
+        ASSERT(iargs->outFile);
+        ASSERT(iargs->errFile);
+        ASSERT(iargs->outFile != stdout);
+        ASSERT(iargs->errFile != stderr);
+        fclose(iargs->outFile);
         iargs->outFile = stdout;
-        //iargs->errFile = stderr;
+        iargs->errFile = stderr;
         ADD_CC;
     }
     ADD_CC;
+}
+
+FILE *get_logFile(input_args_t *iargs)
+{
+#ifdef BUILD_TESTS
+    UNUSED(iargs);
+    return stdout;
+#else
+    return iargs->outFile;
+#endif
+}
+
+FILE *get_elogFile(input_args_t *iargs)
+{
+#ifdef BUILD_TESTS
+    UNUSED(iargs);
+    return stderr;
+#else
+    return iargs->errFile;
+#endif
 }
 
 static void free_filenames_array(char ***filenames, size_t num_files)
@@ -144,7 +175,6 @@ void free_input_args(input_args_t *iargs)
     free(iargs->filenames);
     iargs->filenames = NULL;
 
-    close_logfile(iargs);
     memset(iargs, 0, sizeof(input_args_t));
     ADD_CC;
 }
@@ -261,10 +291,8 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
 
     if(iargs->log_flag)
     {
-        open_logfile(iargs);
-        if(!iargs->outFile)
+        if(!open_logfile(iargs))
         {
-            ELOG_STDERR("ERROR: Unable to open %s for append writing.\n", iargs->log_fname);
             errorFlag++;
             ADD_CC;
             return false;
@@ -351,6 +379,13 @@ static void log_action(const char *fname, input_args_t *iargs)
     }
     free(tmp);
     ADD_CC;
+}
+
+static int sort_filenames(void const *a, void const *b)
+{
+    char *a_fn = *(char**)a;
+    char *b_fn = *(char**)b;
+    return strcmp(a_fn, b_fn);
 }
 
 static bool read_dir_filenames(input_args_t *iargs)
@@ -444,6 +479,8 @@ static bool read_dir_filenames(input_args_t *iargs)
                 iargs->directory);
         //ADD_CC; // unlikely
     }
+
+    qsort(iargs->filenames, iargs->num_files, sizeof(char*), sort_filenames);
 
     ADD_CC;
     return true;
@@ -758,13 +795,13 @@ static void test_duped_args()
     input_args_t args;
     init_input_args(&args);
 
-    char *arg1[] = {"dir1.real", "-d", "./tests/001_inputs", "-i", "100", "-r", "500", "-x", ".xyz", "-i", "10"};
+    char *arg1[] = {"duped1.real", "-d", "./tests/001_inputs", "-i", "100", "-r", "500", "-x", ".xyz", "-i", "10"};
     TC_DPIA(11, arg1, args, false);
 
-    char *arg2[] = {"dir2.real", "-d", "./tests/001_inputs", "-r", "100", "-i", "500", "-r", "20", "-o", ".wat"};
+    char *arg2[] = {"duped2.real", "-d", "./tests/001_inputs", "-r", "100", "-i", "500", "-r", "20", "-o", ".wat"};
     TC_DPIA(11, arg2, args, false);
 
-    char *arg3[] = {"dir3.real", "-d", "./tests/001_inputs", "-$", "-i", "500", "-r", "20", "-o", ".wat"};
+    char *arg3[] = {"duped3.real", "-d", "./tests/001_inputs", "-$", "-i", "500", "-r", "20", "-o", ".wat"};
     TC_DPIA(11, arg3, args, false);
 
     free_input_args(&args);
@@ -776,12 +813,12 @@ static void test_log_args()
     input_args_t args;
     init_input_args(&args);
 
-    char *arg1[] = {"dir1.real", "-d", "./tests/001_inputs", "-L", "./tests/tmp.log"};
+    char *arg1[] = {"dlog1.real", "-d", "./tests/001_inputs", "-L", "./tests/tmp.log"};
     TC_DPIA(5, arg1, args, true);
     assert(args.log_flag);
     assert(strcmp(args.log_fname, "./tests/tmp.log") == 0);
 
-    char *arg2[] = {"dir2.real", "-d", "./tests/001_inputs", "-L", "./tests/"};
+    char *arg2[] = {"dlog2.real", "-d", "./tests/001_inputs", "-L", "./tests/"};
     TC_DPIA(5, arg2, args, false);
     assert(args.log_flag);
     assert(strcmp(args.log_fname, "./tests/") == 0);
@@ -830,7 +867,7 @@ static void test_read_argvfiles()
     assert(expect_ret == parse_input_args(numargs, argsin, &argsout)); \
 } while(0)
 
-void test_parse_input()
+static void test_parse_input()
 {
     input_args_t args;
     init_input_args(&args);
@@ -850,7 +887,7 @@ void test_parse_input()
 
 void test_input_args()
 {
-    fprintf(stdout, "Running tests for input argument parsing..\n");
+    printf("Running tests for input argument parsing..\n");
     test_init_input_args();
     test_free_input_args();
     test_silent_mode();
@@ -860,7 +897,7 @@ void test_input_args()
     test_log_args();
     test_read_argvfiles();
     test_parse_input();
-    fprintf(stdout, "OK.\n");
+    printf("OK.\n");
     ADD_TCC;
 }
 #endif

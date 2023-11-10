@@ -124,7 +124,7 @@ void free_input_args(input_args_t *flags);
 bool silent_mode(const input_args_t *flags);
 bool parse_input_args(int argc, char * const* argv, input_args_t *flags);
 
-void open_logfile(input_args_t *flags);
+bool open_logfile(input_args_t *flags);
 void close_logfile(input_args_t *flags);
 
 #endif

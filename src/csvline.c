@@ -76,12 +76,8 @@ void free_CsvLineView(CsvLineView_t *lv)
 #ifdef COLLECT_DIAGNOSTICS
     if(lv->count_reallocs)
     {
-        BORROW_SPACES;
-        printf("[%s:%s] CsvLineView %p guts\n", __FILE__, __FUNCTION__, lv);
-        printf(" %s   realloc'ed %lu times to final size of %lu with %lu used.\n\n",
-                spaces_str, (size_t)lv->count_reallocs, (size_t)lv->cols_alloc,
-                (size_t)lv->max_used);
-        RETURN_SPACES;
+        LOG_DIAG("CsvLineView", lv, "guts realloc'ed %lu times to final size of %lu with %lu used.\n\n",
+                (size_t)lv->count_reallocs, (size_t)lv->cols_alloc, (size_t)lv->max_used);
     }
     else if(!lv->lengths)
     {
@@ -89,11 +85,8 @@ void free_CsvLineView(CsvLineView_t *lv)
     }
     else
     {
-        BORROW_SPACES;
-        printf("[%s:%s] CsvLineView %p guts\n", __FILE__, __FUNCTION__, lv);
-        printf(" %s   were never realloc'ed beyond initial size of %lu with %lu used.\n\n",
-                spaces_str, (size_t)lv->cols_alloc, (size_t)lv->max_used);
-        RETURN_SPACES;
+        LOG_DIAG("CsvLineView", lv, "guts were never realloc'ed beyond initial size of %lu with %lu used.\n\n",
+                (size_t)lv->cols_alloc, (size_t)lv->max_used);
     }
 #endif
 #ifdef USE_MEMSET
@@ -275,7 +268,7 @@ void print_CsvLineView(CsvLineView_t const *const lv)
 {
     if( null_CsvLineView(lv) )
     {
-        fprintf(stderr, "WARNING: CsvLineView is null in %s\n", __FUNCTION__);
+        ELOG_STDERR("WARNING: CsvLineView is null in %s\n", __FUNCTION__);
         return;
     }
 

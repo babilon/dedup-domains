@@ -80,14 +80,10 @@ void free_DomainView(DomainView_t *dv)
 #ifdef COLLECT_DIAGNOSTICS
     if(dv->count_realloc > 0)
     {
-        BORROW_SPACES;
-        printf("[%s:%s] DomainView %p guts\n",
-                __FILE__, __FUNCTION__, dv);
-        printf(" %s   realloc'ed %lu times to final size of %lu with %lu used.\n\n",
-                spaces_str,
+        LOG_DIAG("DomainView", dv,
+                "guts realloc'ed %lu times to final size of %lu with %lu used.\n\n",
                 (size_t)dv->count_realloc, (size_t)dv->segs_alloc,
                 (size_t)dv->max_used);
-        RETURN_SPACES;
     }
     else if(!dv->lengths)
     {
@@ -95,11 +91,9 @@ void free_DomainView(DomainView_t *dv)
     }
     else
     {
-        BORROW_SPACES;
-        printf("[%s:%s] DomainView %p guts\n", __FILE__, __FUNCTION__, dv);
-        printf(" %s   were never realloc'ed beyond initial size of %lu with %lu used.\n\n",
-                spaces_str, (size_t)dv->segs_alloc, (size_t)dv->max_used);
-        RETURN_SPACES;
+        LOG_DIAG("DomainView", dv,
+                "guts were never realloc'ed beyond initial size of %lu with %lu used.\n\n",
+                (size_t)dv->segs_alloc, (size_t)dv->max_used);
     }
 #endif
 
@@ -291,13 +285,13 @@ bool update_DomainView(DomainView_t *dv, char const *fqd, size_len_t len)
             {
                 if(tmp > UCHAR_MAX)
                 {
-                    fprintf(stderr, "ERROR: segment is longer than allowable in unsigned char.\n");
+                    ELOG_STDERR("ERROR: segment is longer than allowable in unsigned char.\n");
                     ADD_CC;
                     return false;
                 }
                 else
                 {
-                    fprintf(stderr, "WARNING: segment is longer than allowable maximum.\n");
+                    ELOG_STDERR("WARNING: segment is longer than allowable maximum.\n");
                     ADD_CC;
                 }
                 ADD_CC;

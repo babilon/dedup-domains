@@ -113,14 +113,15 @@ void run_tests()
     test_DomainTree();
     test_rw_pfb_csv();
     test_pfb_prune();
+    test_end2end();
     test_input_args();
     printf("OK.\n");
+
     printf("Printing info of structs...\n");
     info_csvline();
     info_domain();
     info_DomainTree();
     info_pfb_prune();
-    test_end2end();
     printf("OK.\n");
 
     // code coverage

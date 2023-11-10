@@ -240,24 +240,19 @@ static DomainTree_t* ctor_DomainTree(DomainTree_t **dt, DomainViewIter_t *it,
         // (1) add 'google' to NEW HASH table [(0) 'dt->child']
         // (2) add 'www' to NEW HASH table [(1) 'dt->child']
 #ifndef RELEASE
-        DEBUG_MODE {
-            //for debug/testing phase
-            DomainTree_t *unexpected_existing = NULL;
-            HASH_FIND(hh, *dt, ndt->tld, ndt->len, unexpected_existing);
-            assert(!unexpected_existing);
-        }
+        //for debug/testing phase
+        DomainTree_t *unexpected_existing = NULL;
+        HASH_FIND(hh, *dt, ndt->tld, ndt->len, unexpected_existing);
+        ASSERT(!unexpected_existing);
 #endif
 
         HASH_ADD_KEYPTR(hh, *dt, ndt->tld, ndt->len, ndt);
 
 #ifndef RELEASE
-        DEBUG_MODE {
-            unsigned cnt = HASH_COUNT(*dt);
-            printf("\tafter hash add, dt has %lu %.*s\n", (size_t)cnt, (int)(*dt)->len, (*dt)->tld);
-            DomainTree_t *rt = *dt, *t = NULL, *tmp;
-            HASH_ITER(hh, rt, t, tmp) {
-                printf("t %.*s\n", (int)t->len, t->tld);
-            }
+        DEBUG_PRINTF("\tafter hash add, dt has %lu %.*s\n", (size_t)HASH_COUNT(*dt), (int)(*dt)->len, (*dt)->tld);
+        DomainTree_t *rt = *dt, *t = NULL, *tmp;
+        HASH_ITER(hh, rt, t, tmp) {
+            DEBUG_PRINTF("t %.*s\n", (int)t->len, t->tld);
         }
 #endif
         // dt will be the next HASH table to insert items into. it is OK to be
@@ -317,17 +312,13 @@ static DomainTree_t* insert_Domain(DomainTree_t **dt, DomainViewIter_t *it, Subd
             // beneficial to the tree.
             if(entry->di->match_strength == MATCH_FULL)
             {
-#ifndef RELEASE
-                DEBUG_MODE {
-                    // item is weaker; no insertion.
-                    printf("[%s:%d] %s item is weaker; skip insert.\n", __FILE__, __LINE__, __FUNCTION__);
-                    printf("\tsdv=%.*s\n", (int)sdv->len, sdv->data);
+                // item is weaker; no insertion.
+                DEBUG_PRINTF("[%s:%d] %s item is weaker; skip insert.\n", __FILE__, __LINE__, __FUNCTION__);
+                DEBUG_PRINTF("\tsdv=%.*s\n", (int)sdv->len, sdv->data);
 #ifdef BUILD_TESTS
-                    printf("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
+                DEBUG_PRINTF("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
 #endif
-                    printf("\texisting match:%d\n", entry->di->match_strength);
-                }
-#endif
+                DEBUG_PRINTF("\texisting match:%d\n", entry->di->match_strength);
                 ADD_CC;
                 return NULL;
             }
@@ -357,33 +348,25 @@ static DomainTree_t* insert_Domain(DomainTree_t **dt, DomainViewIter_t *it, Subd
                     ASSERT(!entry->child);
                     if(entry->child)
                     {
-                        fprintf(stderr, "ALERT: unexpected child at %s:%d\n", __FILE__, __LINE__);
+                        ELOG_STDERR("ALERT: unexpected child at %s:%d\n", __FILE__, __LINE__);
                         free_DomainTree(&entry->child);
                     }
-#ifndef RELEASE
-                    DEBUG_MODE {
-                        printf("[%s:%d] %s replace existing entry with stronger match; inserted.\n", __FILE__, __LINE__, __FUNCTION__);
-                        printf("\tsdv=%.*s\n", (int)sdv->len, sdv->data);
-                        printf("\ttld=%.*s\n", (int)entry->len, entry->tld);
+                    DEBUG_PRINTF("[%s:%d] %s replace existing entry with stronger match; inserted.\n", __FILE__, __LINE__, __FUNCTION__);
+                    DEBUG_PRINTF("\tsdv=%.*s\n", (int)sdv->len, sdv->data);
+                    DEBUG_PRINTF("\ttld=%.*s\n", (int)entry->len, entry->tld);
 #ifdef BUILD_TESTS
-                        printf("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
-#endif
-                    }
+                    DEBUG_PRINTF("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
 #endif
                     ADD_CC;
                     return entry;
                 }
                 else // not strong enough to override
                 {
-#ifndef RELEASE
-                    DEBUG_MODE {
-                        printf("[%s:%d] %s identical; skip insert.\n", __FILE__, __LINE__, __FUNCTION__);
-                        printf("\tsdv=%.*s\n", (int)sdv->len, sdv->data);
-                        printf("\ttld=%.*s\n", (int)entry->len, entry->tld);
+                    DEBUG_PRINTF("[%s:%d] %s identical; skip insert.\n", __FILE__, __LINE__, __FUNCTION__);
+                    DEBUG_PRINTF("\tsdv=%.*s\n", (int)sdv->len, sdv->data);
+                    DEBUG_PRINTF("\ttld=%.*s\n", (int)entry->len, entry->tld);
 #ifdef BUILD_TESTS
-                        printf("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
-#endif
-                    }
+                    DEBUG_PRINTF("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
 #endif
                     ADD_CC;
                     return NULL;
@@ -394,12 +377,8 @@ static DomainTree_t* insert_Domain(DomainTree_t **dt, DomainViewIter_t *it, Subd
                 // the length check is necessary. it would be a case where
                 // everything above the current label matches and the proposed
                 // has some extra bit of information that makes it special.
-#ifndef RELEASE
-                DEBUG_MODE {
-                    printf("di len=%lu\n", (size_t)entry->di->len);
-                    printf("dv len=%lu\n", (size_t)it->dv->len);
-                }
-#endif
+                DEBUG_PRINTF("di len=%lu\n", (size_t)entry->di->len);
+                DEBUG_PRINTF("dv len=%lu\n", (size_t)it->dv->len);
                 ASSERT(entry->di->len < it->dv->len);
                 ADD_CC;
             }
@@ -427,13 +406,9 @@ static DomainTree_t* insert_Domain(DomainTree_t **dt, DomainViewIter_t *it, Subd
             }
             // create entry for this DomainInfo.
             entry->di = convert_DomainInfo(it->dv);
-#ifndef RELEASE
-            DEBUG_MODE {
-                printf("[%s:%d] %s next_tld is nil; cleared children and inserted.\n", __FILE__, __LINE__, __FUNCTION__);
+            DEBUG_PRINTF("[%s:%d] %s next_tld is nil; cleared children and inserted.\n", __FILE__, __LINE__, __FUNCTION__);
 #ifdef BUILD_TESTS
-                printf("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
-#endif
-            }
+            DEBUG_PRINTF("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
 #endif
             ADD_CC;
             return entry;
@@ -445,13 +420,9 @@ static DomainTree_t* insert_Domain(DomainTree_t **dt, DomainViewIter_t *it, Subd
                 // clear possible children
                 free_DomainTree(&entry->child);
                 replace_DomainInfo(entry, it->dv);
-#ifndef RELEASE
-                DEBUG_MODE {
-                    printf("[%s:%d] %s next_tld is nil; replace it, clear children and insert.\n", __FILE__, __LINE__, __FUNCTION__);
+                DEBUG_PRINTF("[%s:%d] %s next_tld is nil; replace it, clear children and insert.\n", __FILE__, __LINE__, __FUNCTION__);
 #ifdef BUILD_TESTS
-                    printf("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
-#endif
-                }
+                DEBUG_PRINTF("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
 #endif
                 ADD_CC;
                 return entry;
@@ -468,14 +439,10 @@ static DomainTree_t* insert_Domain(DomainTree_t **dt, DomainViewIter_t *it, Subd
         // was 'ntd' to mean next top level domain
         ASSERT(!entry);
         entry = ctor_DomainTree(dt, it, sdv);
-#ifndef RELEASE
-        DEBUG_MODE {
-            printf("[%s:%d] %s build tree; inserted. dt=%p ndt=%p\n", __FILE__, __LINE__, __FUNCTION__, *dt, entry);
-            printf("\tsdv=%.*s\n", (int)sdv->len, sdv->data);
+        DEBUG_PRINTF("[%s:%d] %s build tree; inserted. dt=%p ndt=%p\n", __FILE__, __LINE__, __FUNCTION__, *dt, entry);
+        DEBUG_PRINTF("\tsdv=%.*s\n", (int)sdv->len, sdv->data);
 #ifdef BUILD_TESTS
-            printf("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
-#endif
-        }
+        DEBUG_PRINTF("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
 #endif
         ADD_CC;
         return entry;
@@ -497,14 +464,14 @@ DomainTree_t* insert_DomainTree(DomainTree_t **dt, DomainView_t *dv)
     // should be impossible to get to without a programmer introduced error.
     if(dv->match_strength == MATCH_NOTSET)
     {
-        fprintf(stderr, "ERROR: DomainView has uninitialized match_strength set; skip insertion.\n");
+        ELOG_STDERR("ERROR: DomainView has uninitialized match_strength set; skip insertion.\n");
         ADD_CC;
         return NULL;
     }
 
     if(dv->match_strength == MATCH_BOGUS)
     {
-        fprintf(stderr, "ALERT: DomainView has bogus match_strength set; skip insertion.\n");
+        ELOG_STDERR("ALERT: DomainView has bogus match_strength set; skip insertion.\n");
         ADD_CC;
         return NULL;
     }
@@ -545,7 +512,7 @@ static void do_visit_DomainTree(DomainTree_t *root,
         if(dt->di && dt->di->alive)
         {
 #ifdef BUILD_TESTS
-            printf("DT: Visited %.*s\n", (int)dt->di->len, dt->di->fqd);
+            DEBUG_PRINTF("DT: Visited %.*s\n", (int)dt->di->len, dt->di->fqd);
 #endif
             (*visitor_func)(dt->di, context);
             ADD_CC;

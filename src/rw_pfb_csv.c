@@ -147,7 +147,7 @@ static bool load_LineData(char const *buffer, char const *end_buffer,
     size_t request_alloc = ld->len + len + 1;
     if(request_alloc >= MAX_ALLOC_LINE)
     {
-        fprintf(stderr, "WARNING: excessive line length. truncating characters after %lu. requested: %lu\n",
+        ELOG_STDERR("WARNING: excessive line length. truncating characters after %lu. requested: %lu\n",
                 MAX_ACCEPTABLE_LINE_LENGTH, request_alloc);
         request_alloc = MAX_ALLOC_LINE;
         // fix length to the max supported ignoring the stuff after
@@ -169,7 +169,7 @@ static bool load_LineData(char const *buffer, char const *end_buffer,
         }
         else
         {
-            fprintf(stderr, "ERROR: memory reallocation failed.\n");
+            ELOG_STDERR("ERROR: memory reallocation failed.\n");
             return found_newline;
         }
         ADD_CC;
@@ -503,7 +503,7 @@ void write_pfb_csv(PortLineData_t const *const pld, pfb_context_t *pfbc)
     const int err = writeline(pfbc->out_file, pld);
     if(err)
     {
-        fprintf(stderr, "ERROR (%d) while attempting to write line (%s) to '%s'\n",
+        ELOG_STDERR("ERROR (%d) while attempting to write line (%s) to '%s'\n",
                 err, pld->data, pfbc->out_fname);
     }
     ADD_CC;
