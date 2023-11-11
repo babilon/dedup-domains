@@ -111,7 +111,6 @@ char* outputfilename(const char *input, const char *ext)
         {
             period = walker;
             ADD_CC;
-            break;
         }
         ADD_CC;
     }
@@ -641,8 +640,6 @@ int sort_LineNumbers(void const *a, void const *b)
 void pfb_consolidate(DomainTree_t **root_dt, ArrayDomainInfo_t *array_di)
 {
     ASSERT(root_dt);
-    ASSERT(*root_dt);
-
     ASSERT(array_di);
     ASSERT(array_di->len_cd > 0);
     ASSERT(array_di->cd);
@@ -1514,6 +1511,30 @@ static void test_outputfilename()
     ext = "the_ext";
     dup = outputfilename(input, ext);
     assert(!memcmp("Append_the_ext", dup, 15));
+    free(dup);
+
+    input = "filename.fat.txt";
+    ext = ".pruned";
+    dup = outputfilename(input, ext);
+    assert(!memcmp("filename.fat.pruned", dup, 20));
+    free(dup);
+
+    input = "filename.txt.fat.pruned";
+    ext = ".pruned.sorted";
+    dup = outputfilename(input, ext);
+    assert(!memcmp("filename.txt.fat.pruned.sorted", dup, 31));
+    free(dup);
+
+    input = "filename.txt.";
+    ext = ".wat";
+    dup = outputfilename(input, ext);
+    assert(!memcmp("filename.txt.wat", dup, 17));
+    free(dup);
+
+    input = "filename.txt..";
+    ext = ".wat";
+    dup = outputfilename(input, ext);
+    assert(!memcmp("filename.txt..wat", dup, 17));
     free(dup);
 
     ADD_TCC;

@@ -19,18 +19,11 @@
  * limitations under the License.
  */
 #include "inputargs.h"
+#include "version.h"
 #include <unistd.h>
 #include <getopt.h>
 #include <sys/stat.h>
 #include <dirent.h>
-
-#define LOG_IFARGS(args, fmt, ...) do { \
-    if(!silent_mode(args)) { \
-        open_logfile(args); \
-        fprintf(get_logFile(args), fmt, ##__VA_ARGS__); \
-        close_logfile(args); \
-    } \
-} while(0)
 
 #define ELOG_IFARGS(args, fmt, ...) do { \
     open_logfile(args); \
@@ -48,6 +41,7 @@ extern char* outputfilename(const char *input, const char *ext);
 
 bool open_logfile(input_args_t *iargs)
 {
+    assert(iargs && "tests only");
     if(iargs->log_fname)
     {
         iargs->outFile = fopen(iargs->log_fname, "ab");
@@ -70,6 +64,7 @@ bool open_logfile(input_args_t *iargs)
 
 void close_logfile(input_args_t *iargs)
 {
+    assert(iargs && "tests only");
     if(iargs->log_fname)
     {
         ASSERT(iargs->outFile);
@@ -86,22 +81,83 @@ void close_logfile(input_args_t *iargs)
 
 FILE *get_logFile(input_args_t *iargs)
 {
+    assert(iargs && "tests only");
 #ifdef BUILD_TESTS
     UNUSED(iargs);
     return stdout;
 #else
-    return iargs->outFile;
+    return iargs->outFile == NULL ? stdout : iargs->outFile;
 #endif
 }
 
-FILE *get_elogFile(input_args_t *iargs)
+static FILE *get_elogFile(input_args_t *iargs)
 {
+    assert(iargs && "tests only");
 #ifdef BUILD_TESTS
     UNUSED(iargs);
     return stderr;
 #else
-    return iargs->errFile;
+    return iargs->errFile == NULL ? stderr : iargs->errFile;
 #endif
+}
+
+typedef struct globalErrLog
+{
+    const char *log_fname;
+    FILE *errFile;
+} globalErrLog_t;
+
+static globalErrLog_t *global_log = NULL;
+
+void open_globalErrLog()
+{
+    if(global_log)
+    {
+        if(global_log->log_fname && global_log->errFile == NULL)
+        {
+            global_log->errFile = fopen(global_log->log_fname, "ab");
+            if(!global_log->errFile)
+            {
+                fprintf(stderr, "ERROR: Unable to open %s for append writing.\n", global_log->log_fname);
+            }
+            ADD_CC;
+        }
+        ADD_CC;
+    }
+    ADD_CC;
+}
+
+void close_globalErrLog()
+{
+    if(global_log && global_log->log_fname && global_log->errFile &&
+            global_log->errFile != stderr)
+    {
+        fclose(global_log->errFile);
+        global_log->errFile = NULL;
+        ADD_CC;
+    }
+    ADD_CC;
+}
+
+FILE *get_globalErrLog()
+{
+    if(global_log && global_log->log_fname && global_log->errFile)
+    {
+        ADD_CC;
+        return global_log->errFile;
+    }
+
+    ADD_CC;
+    return stderr;
+}
+
+void free_globalErrLog()
+{
+    if(global_log)
+    {
+        free(global_log);
+        global_log = NULL;
+    }
 }
 
 static void free_filenames_array(char ***filenames, size_t num_files)
@@ -179,10 +235,14 @@ void free_input_args(input_args_t *iargs)
     ADD_CC;
 }
 
+/**
+ * Returns true if friendly diagnostic messages should be suppressed, i.e., to
+ * NOT print supplemental information.
+ */
 bool silent_mode(const input_args_t *iargs)
 {
     ADD_CC;
-    return (iargs->silent_flag || iargs->log_flag);
+    return (iargs->silent_flag && !iargs->log_flag);
 }
 
 /**
@@ -194,10 +254,13 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
     char opt;
 
     // getopt(int, char * const *, char const *);
-    while(errorFlag == 0 && (opt = getopt(argc, argv, ":stbL:i:r:d:x:o:")) != -1)
+    while(errorFlag == 0 && (opt = getopt(argc, argv, ":vstbL:i:r:d:x:o:E:")) != -1)
     {
         switch(opt)
         {
+            case 'v':
+                printf("Version: %s\n", VERSIONID);
+                break;
             case 's':
                 iargs->silent_flag = true;
                 ADD_CC;
@@ -205,6 +268,11 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
             case 'L':
                 iargs->log_flag = true;
                 iargs->log_fname = optarg;
+                ADD_CC;
+                break;
+            case 'E':
+                iargs->errLog_flag = true;
+                iargs->errLog_fname = optarg;
                 ADD_CC;
                 break;
             case 'i':
@@ -317,6 +385,12 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
             return false;
         }
         ADD_CC;
+    }
+
+    if(iargs->errLog_flag)
+    {
+        global_log = calloc(1, sizeof(globalErrLog_t));
+        global_log->log_fname = iargs->errLog_fname;
     }
 
 #ifdef BUILD_TESTS
@@ -620,7 +694,7 @@ static void test_silent_mode()
     input_args_t args;
     init_input_args(&args);
 
-    // not silent by default
+    // NOT silent by default
     assert(!silent_mode(&args));
 
     // set silent flag
@@ -630,9 +704,10 @@ static void test_silent_mode()
     free_input_args(&args);
     init_input_args(&args);
 
+    // NOT silent by default
     assert(!silent_mode(&args));
     args.log_flag = true;
-    assert(silent_mode(&args));
+    assert(!silent_mode(&args));
     ADD_TCC;
 }
 
@@ -885,6 +960,56 @@ static void test_parse_input()
     ADD_TCC;
 }
 
+static void test_errLog()
+{
+    // static initialized global variable
+    assert(!global_log);
+    assert(get_globalErrLog() == stderr);
+
+    input_args_t args;
+    init_input_args(&args);
+
+    // not affected by input_args_t
+    assert(!global_log);
+    assert(get_globalErrLog() == stderr);
+
+    char *arg1[] = {"files1.real", "-E", "./tests/test_errout.log", "./tests/001_inputs/EasyList_Chinese.fat"};
+    TC_PI(4, arg1, args, true);
+
+    assert(args.errLog_flag);
+    assert(args.errLog_fname);
+    assert(0 == strcmp(args.errLog_fname, "./tests/test_errout.log"));
+
+    free_input_args(&args);
+    
+    // flags reset after free
+    assert(!args.errLog_flag);
+    assert(!args.errLog_fname);
+
+    // if errLog_flag was set, this is initialized non-nil.
+    assert(global_log);
+    assert(0 == strcmp(global_log->log_fname, "./tests/test_errout.log"));
+    assert(!global_log->errFile);
+    assert(get_globalErrLog() == stderr);
+
+    open_globalErrLog();
+
+    assert(0 == strcmp(global_log->log_fname, "./tests/test_errout.log"));
+    assert(global_log->errFile);
+    assert(global_log->errFile != stderr);
+
+    ELOG_STDERR("TEST: this is a test\n");
+
+    close_globalErrLog();
+    assert(global_log);
+    assert(!global_log->errFile);
+    assert(get_globalErrLog() == stderr);
+
+    free_input_args(&args);
+    free(global_log);
+    ADD_TCC;
+}
+
 void test_input_args()
 {
     printf("Running tests for input argument parsing..\n");
@@ -895,6 +1020,7 @@ void test_input_args()
     test_read_dir();
     test_duped_args();
     test_log_args();
+    test_errLog();
     test_read_argvfiles();
     test_parse_input();
     printf("OK.\n");

@@ -1,5 +1,6 @@
 tests/test_*
-tests/unit_pfb_prune/*
 *.sw[a-z]
-obj/
-bin/
+*.real
+*.o
+*.gch
+*.nogit

@@ -37,10 +37,10 @@ extern void set_realloc_DomainInfo_size(int v);
 
 int main(int argc, char *const * argv)
 {
-#ifdef RELEASE
+#if defined(RELEASE) || defined(RELEASE_LOGGING)
     // smoke alarm for release builds. verify assert('invariant') is non-fatal.
-    ASSERT(false);
-    assert(false);
+    ASSERT(false && "smoke test for 'ASSERT'");
+    assert(false && "smoke test for 'assert'");
 #endif
 
     input_args_t flags;
@@ -53,39 +53,32 @@ int main(int argc, char *const * argv)
 
     if(flags.override_buffersize)
     {
-        if(!silent_mode(&flags))
-        {
-            open_logfile(&flags);
-            fprintf(flags.outFile, "NOTE: Overriding initial buffer size to %d\n",
+        LOG_IFARGS(&flags, "NOTE: Overriding initial buffer size to %d\n",
                     flags.initial_buffer_size);
-            close_logfile(&flags);
-        }
         set_DomainInfo_array_size(flags.initial_buffer_size);
     }
 
     if(flags.override_reallocsize)
     {
-        if(!silent_mode(&flags))
-        {
-            open_logfile(&flags);
-            fprintf(flags.outFile, "NOTE: Overriding realloc buffer size to %d\n",
-                    flags.realloc_buffer_size);
-            close_logfile(&flags);
-        }
+        LOG_IFARGS(&flags, "NOTE: Overriding realloc buffer size to %d\n",
+                flags.realloc_buffer_size);
         set_realloc_DomainInfo_size(flags.realloc_buffer_size);
     }
 
     if(!silent_mode(&flags))
     {
         open_logfile(&flags);
-        fprintf(flags.outFile, "Prune duplicate entries from the following files:\n");
+        fprintf(get_logFile(&flags), "Prune duplicate entries from the following files:\n");
         for(size_t i = 0; i < flags.num_files; i++)
         {
-            fprintf(flags.outFile, "  %s\n", flags.filenames[i]);
+            fprintf(get_logFile(&flags), "  %s\n", flags.filenames[i]);
         }
 
-        fprintf(flags.outFile, "Prune duplicate entries from all '*%s' files in %s and write to '*%s' files\n",
-                flags.inp_ext, flags.directory, flags.out_ext);
+        if(flags.dir_flag)
+        {
+            fprintf(get_logFile(&flags), "Prune duplicate entries from all '*%s' files in %s and write to '*%s' files\n",
+                    flags.inp_ext, flags.directory, flags.out_ext);
+        }
         close_logfile(&flags);
     }
 
@@ -98,7 +91,14 @@ int main(int argc, char *const * argv)
     }
 #endif
 
-    assert(flags.num_files);
+    if(!flags.num_files)
+    {
+        LOG_IFARGS(&flags, "Zero files to prune. Terminating..\n");
+
+        free_input_args(&flags);
+        free_globalErrLog();
+        return 0;
+    }
 
     const bool use_shared_buffer = flags.use_shared_buffer;
 
@@ -108,8 +108,8 @@ int main(int argc, char *const * argv)
 
     free_input_args(&flags);
 
-    assert(contexts.begin_context->dt);
-    assert(!contexts.begin_context->dt[0]);
+    ASSERT(contexts.begin_context->dt);
+    ASSERT(!contexts.begin_context->dt[0]);
 
     // Effectively, the DomainTree is held by the collection of contexts. this
     // allows the contexts to be the root of the data structure. after the tree
@@ -118,26 +118,26 @@ int main(int argc, char *const * argv)
     {
         // every context references the same dt. only have to null the place holder
         // for one of the contexts.
-        assert(c->dt == contexts.begin_context->dt);
-        assert(!c->dt[0]);
+        ASSERT(c->dt == contexts.begin_context->dt);
+        ASSERT(!c->dt[0]);
     }
 
-    assert(contexts.begin_context->dt);
-    assert(contexts.begin_context->dt[0] == NULL);
+    ASSERT(contexts.begin_context->dt);
+    ASSERT(contexts.begin_context->dt[0] == NULL);
 
     // open the files to verify all files can be read. open output files to
     // verify those can be written.
     pfb_read_csv(&contexts);
 
     // confirm that reading didn't bork a pointer
-    assert(contexts.begin_context->dt);
-    assert(contexts.begin_context->dt[0]);
+    ASSERT(contexts.begin_context->dt);
+    // if no lines to be read, the DomainTree pointer remains null. A-OK
 
     // confirm DomainTree is not borked after reading.
     for(pfb_context_t *c = contexts.begin_context; c != contexts.end_context; c++)
     {
-        assert(c->dt == contexts.begin_context->dt);
-        assert(c->dt[0] == contexts.begin_context->dt[0]);
+        ASSERT(c->dt == contexts.begin_context->dt);
+        ASSERT(c->dt[0] == contexts.begin_context->dt[0]);
     }
 
     // the tree has the full set of DomainInfo. allocate a chunk of space to
@@ -155,8 +155,8 @@ int main(int argc, char *const * argv)
     pfb_consolidate(contexts.begin_context->dt, &array_di);
 
     // DomainTree is free'd during above consolidation
-    assert(contexts.begin_context->dt);
-    assert(!contexts.begin_context->dt[0]);
+    ASSERT(contexts.begin_context->dt);
+    ASSERT(!contexts.begin_context->dt[0]);
 
     // write all unique domains to respective output files
     pfb_write_csv(&contexts, &array_di, use_shared_buffer);
@@ -164,13 +164,15 @@ int main(int argc, char *const * argv)
     free_ArrayDomainInfo(&array_di);
     pfb_free_contexts(&contexts);
 
-    assert(!contexts.begin_context);
-    assert(!contexts.end_context);
-    assert(!array_di.begin_pfb_context);
+    ASSERT(!contexts.begin_context);
+    ASSERT(!contexts.end_context);
+    ASSERT(!array_di.begin_pfb_context);
 
 #ifdef COLLECT_DIAGNOSTICS
     printf("Collected %lu unique domains.\n", collected_domains_counter);
 #endif
+
+    free_globalErrLog();
 
     return 0;
 }

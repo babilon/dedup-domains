@@ -242,7 +242,7 @@ int read_pfb_line(pfb_context_t *pfbc,
     FILE *f = pfbc->in_file;
     ASSERT(f);
     // programmer error to not rewind before entering this function.
-    ASSERT(ftell(f) == 0);
+    assert(ftell(f) == 0 && "tests only");
 
     char **buffer;
     char *local_buffer;

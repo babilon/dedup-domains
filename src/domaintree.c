@@ -248,7 +248,7 @@ static DomainTree_t* ctor_DomainTree(DomainTree_t **dt, DomainViewIter_t *it,
 
         HASH_ADD_KEYPTR(hh, *dt, ndt->tld, ndt->len, ndt);
 
-#ifndef RELEASE
+#if 0
         DEBUG_PRINTF("\tafter hash add, dt has %lu %.*s\n", (size_t)HASH_COUNT(*dt), (int)(*dt)->len, (*dt)->tld);
         DomainTree_t *rt = *dt, *t = NULL, *tmp;
         HASH_ITER(hh, rt, t, tmp) {
@@ -339,7 +339,7 @@ static DomainTree_t* insert_Domain(DomainTree_t **dt, DomainViewIter_t *it, Subd
 #ifdef BUILD_TESTS
                 // when the length is the same, the domain is equal b/c every
                 // step to this point has found an entry in the next hash table.
-                ASSERT(!memcmp(entry->di->fqd, it->dv->fqd, entry->di->len));
+                assert(!memcmp(entry->di->fqd, it->dv->fqd, entry->di->len) && "tests only");
 #endif
                 if(it->dv->match_strength > entry->di->match_strength)
                 {

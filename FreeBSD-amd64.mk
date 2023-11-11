@@ -1,4 +1,6 @@
-CC := gcc
+.DEFAULT_GOAL := main
+
+CC := clang
 SRCDIR := src
 OBJDIR := obj
 BINDIR := bin
@@ -69,30 +71,34 @@ all: main regex release test codecoverage
 main: $(OBJMAIN)
 	@echo Linking $@
 	@mkdir -p ${BINDIR}
-	@$(CC) $(LFLAGS) $^ -o ./${BINDIR}/$@.real
+	@$(CC) $(LFLAGS) $^ -o ./${BINDIR}/$@-BSD.real
 
 regex: $(OBJREGEX)
 	@echo Linking $@
 	@mkdir -p ${BINDIR}
-	@$(CC) $(LFLAGS) $^ -o ./${BINDIR}/$@.real
+	@$(CC) $(LFLAGS) $^ -o ./${BINDIR}/$@-BSD.real
 	@echo "NOTICE: regex pruning is not implemented yet."
 
 release: $(OBJREL)
 	@echo Linking $@
 	@mkdir -p ${BINDIR}
-	@$(CC) $(FLAGS) $^ -o ./${BINDIR}/$@.real
+	@$(CC) $(FLAGS) $^ -o ./${BINDIR}/$@-BSD.real
+
+fpos: obj/testfpos.o
+	@mkdir -p ${BINDIR}
+	@$(CC) $(LFLAGS) $^ -o ./${BINDIR}/$@-BSD.real
 
 test: $(OBJTEST)
 	@mkdir -p ${BINDIR}
-	@$(CC) $(CFLAGS) $(TESTFLAGS) $^ -o ./${BINDIR}/$@.real
+	@$(CC) $(CFLAGS) $(TESTFLAGS) $^ -o ./${BINDIR}/$@-BSD.real
 
 testsizet: $(OBJTEST_SIZE_T)
 	@mkdir -p ${BINDIR}
-	@$(CC) $(CFLAGS) $(TESTFLAGS) $(SIZE_T) $^ -o ./${BINDIR}/$@.real
+	@$(CC) $(CFLAGS) $(TESTFLAGS) $(SIZE_T) $^ -o ./${BINDIR}/$@-BSD.real
 
 codecoverage: $(OBJCODECOV)
 	@mkdir -p ${BINDIR}
-	@$(CC) $(CFLAGS) $(CODECOVFLAGS) $^ -o ./${BINDIR}/$@.real
+	@$(CC) $(CFLAGS) $(CODECOVFLAGS) $^ -o ./${BINDIR}/$@-BSD.real
 
 .PHONY: clean
 clean:

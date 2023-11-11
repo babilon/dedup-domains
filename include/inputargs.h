@@ -117,14 +117,26 @@ typedef struct input_args
     char ** filenames;
     size_t num_files;
 
+    bool errLog_flag;
+    char const *errLog_fname;
+
 } input_args_t;
 
-void init_input_args(input_args_t *flags);
-void free_input_args(input_args_t *flags);
-bool silent_mode(const input_args_t *flags);
-bool parse_input_args(int argc, char * const* argv, input_args_t *flags);
+extern void init_input_args(input_args_t *flags);
+extern void free_input_args(input_args_t *flags);
+extern bool silent_mode(const input_args_t *flags);
+extern bool parse_input_args(int argc, char * const* argv, input_args_t *flags);
 
-bool open_logfile(input_args_t *flags);
-void close_logfile(input_args_t *flags);
+extern bool open_logfile(input_args_t *flags);
+extern FILE *get_logFile(input_args_t *iargs);
+extern void close_logfile(input_args_t *flags);
+
+#define LOG_IFARGS(args, fmt, ...) do { \
+    if(!silent_mode(args)) { \
+        open_logfile(args); \
+        fprintf(get_logFile(args), fmt, ##__VA_ARGS__); \
+        close_logfile(args); \
+    } \
+} while(0)
 
 #endif

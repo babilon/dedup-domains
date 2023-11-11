@@ -1,0 +1,8 @@
+#!/bin/bash
+
+NUMPROC=$(getconf _NPROCESSORS_ONLN)
+ref=$(git log --pretty="format:%h" -1)
+sed -i.nogit -E "s/<[a-z0-9]+>/<${ref}>/g" include/version.h
+
+TARGET="${1:-release}"
+make clean && make -j ${NUMPROC} ${TARGET}

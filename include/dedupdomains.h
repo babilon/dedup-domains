@@ -34,6 +34,8 @@
 
 #ifdef RELEASE
 #define NIL_ASSERT
+#elif defined(RELEASE_LOGGING)
+#define LOG_AND_CONTINUE
 #else
 // This will dramatically slow the program down.
 //#define HASH_DEBUG
@@ -43,11 +45,18 @@
 #define ASSERT(x) do {} while(0)
 
 #elif defined(EXIT_ON_FATAL)
-#define ASSERT(x) do { if(!(x)) exit(EXIT_FAILURE); } while(0)
+#define ASSERT(x) do { \
+    if(!(x)) { \
+        ELOG_STDERR("[%s:%d] %s: 'ASSERT' failed: %s\n", __FILE__, __LINE__, __FUNCTION__, #x); \
+        exit(EXIT_FAILURE); \
+    } while(0)
 
 #elif defined(LOG_AND_CONTINUE)
-#define ASSERT(x) do { if(!(x)) { fprintf(stderr, "[%s:%d] %s failed assert: %s", __FILE__, __LINE__, __FUNCTION__, #x); } } while(0)
-
+#define ASSERT(x) do { \
+    if(!(x)) { \
+        ELOG_STDERR("[%s:%d] %s: 'ASSERT' failed: %s\n", __FILE__, __LINE__, __FUNCTION__, #x); \
+    } \
+} while(0)
 #else
 #define ASSERT(x) assert((x))
 #endif
@@ -77,9 +86,15 @@ typedef uint size_len_t;
 #define DEBUG_PRINTF(fmt, ...)
 #endif
 
+extern void open_globalErrLog();
+FILE *get_globalErrLog();
+extern void close_globalErrLog();
+extern void free_globalErrLog();
+
 #define ELOG_STDERR(fmt, ...) do { \
-    fprintf(stderr, fmt, ##__VA_ARGS__); \
-    fflush(stderr); \
+    open_globalErrLog(); \
+    fprintf(get_globalErrLog(), fmt, ##__VA_ARGS__); \
+    close_globalErrLog(); \
 } while(0)
 
 #endif
