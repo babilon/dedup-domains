@@ -135,14 +135,6 @@ static bool load_LineData(char const *buffer, char const *end_buffer,
     // newline found before end of input buffer.
     const bool found_newline = (ld->len + len) && (c != end_buffer);
 
-    if(skipline)
-    {
-        ADD_CC;
-        // true indicates a \n or \r was read
-        // false indicates more reading necessary.
-        return found_newline;
-    }
-
     // +1 for null terminator
     size_t request_alloc = ld->len + len + 1;
     if(request_alloc >= MAX_ALLOC_LINE)
@@ -153,6 +145,20 @@ static bool load_LineData(char const *buffer, char const *end_buffer,
         // fix length to the max supported ignoring the stuff after
         len = request_alloc - ld->len - 1;
         ADD_CC;
+    }
+
+    // when skipping lines of no interest, at minimum, the "length" of the line
+    // data must be updated even if the buffer is nil. it's important to not
+    // read the buffer despite the length. this length is a factor in
+    // determining whether a newline was found, to increment the line counter.
+    ld->len += len;
+
+    if(skipline)
+    {
+        ADD_CC;
+        // true indicates a \n or \r was read
+        // false indicates more reading necessary.
+        return found_newline;
     }
 
     if(request_alloc > ld->alloc)
@@ -177,7 +183,6 @@ static bool load_LineData(char const *buffer, char const *end_buffer,
 
     // null terminator is excluded from the "length" of the string.  don't copy
     // the extra byte from 'buffer'. it might be out of bounds.
-    ld->len += len;
     // only copy the number of bytes read in this iteration.  this is appending
     // data.
     memcpy(ld->pos, buffer, len);
@@ -314,7 +319,6 @@ int read_pfb_line(pfb_context_t *pfbc,
                 //  1| www.first.domain.com
                 // >2| sec.domain.stuff.com
                 //  3| 3rd.domain.com
-                const linenumber_t ld_linenumber = ld.linenumber;
                 bool newline = false;
 
                 // read all lines: do not skip
@@ -324,7 +328,7 @@ int read_pfb_line(pfb_context_t *pfbc,
                             end_buffer, &pos_buffer, &ld, false);
                 }
                 // skip this line
-                else if(*nextline - 1 > ld_linenumber)
+                else if(*nextline - 1 > ld.linenumber)
                 {
                     newline = load_LineData(pos_buffer,
                             end_buffer, &pos_buffer, &ld, true);
@@ -772,7 +776,7 @@ static void test_load_LineDataSKIP()
 
     assert(found_nl);
     assert(ld.alloc == 100);
-    assert(ld.len == 0);
+    assert(ld.len == 4);
     assert(pos_buffer == buffer + 4);
 
     free_LineData(&ld);

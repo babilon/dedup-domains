@@ -682,8 +682,6 @@ void pfb_consolidate(DomainTree_t **root_dt, ArrayDomainInfo_t *array_di)
         DEBUG_PRINTF("sorting. before sort the line numbers in order are:\n");
         for(size_t l = 0; l < array_di->cd[i].next; l++)
         {
-            ASSERT(l < array_di->cd[i].next);
-            ASSERT(l < array_di->cd[i].alloc_linenumbers);
             ASSERT(array_di->cd[i].di[i]->linenumber > 0);
             DEBUG_PRINTF("\t%d\n", array_di->cd[i].di[l]->linenumber);
         }
@@ -696,8 +694,6 @@ void pfb_consolidate(DomainTree_t **root_dt, ArrayDomainInfo_t *array_di)
         DEBUG_PRINTF("sorting. before sort the line numbers in order are:\n");
         for(size_t l = 0; l < array_di->cd[i].next; l++)
         {
-            ASSERT(l < array_di->cd[i].next);
-            ASSERT(l < array_di->cd[i].alloc_linenumbers);
             DEBUG_PRINTF("\t%d\n", array_di->cd[i].linenumbers[l]);
         }
 #endif
@@ -710,9 +706,6 @@ void pfb_consolidate(DomainTree_t **root_dt, ArrayDomainInfo_t *array_di)
         DEBUG_PRINTF("sorted. after sort the line numbers in order are:\n");
         for(size_t l = 0; l < array_di->cd[i].next; l++)
         {
-            ASSERT(i < array_di->len_cd);
-            ASSERT(l < array_di->cd[i].next);
-            ASSERT(l < array_di->cd[i].alloc_linenumbers);
             DEBUG_PRINTF("\t%d\n", array_di->cd[i].linenumbers[l]);
         }
 #endif
