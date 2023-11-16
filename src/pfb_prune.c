@@ -200,9 +200,15 @@ void pfb_insert(PortLineData_t const *const pld, pfb_context_t *pfbc, void *cont
 
     if(pfbc->dv.match_strength == MATCH_REGEX)
     {
+#ifdef REGEX_ENABLED
         // write to the output file for this input file and skip insertion. it
         // is a regex that does not get pruned.
         write_pfb_csv(pld, pfbc);
+#else
+        // add the line information to list for direct carry over to the final
+        // list.
+        insert_carry_over(&pfbc->co, pld->linenumber);
+#endif
         ADD_CC;
     }
     else
@@ -258,6 +264,7 @@ pfb_contexts_t pfb_init_contexts(size_t alloc_contexts, const char *out_ext,
         c->dt = cs.begin_context->dt;
         c->in_fname = pfb_strdup(*argv);
         c->out_fname = outputfilename(c->in_fname, out_ext);
+        init_carry_over(&c->co);
         ADD_CC;
     }
 
@@ -377,6 +384,7 @@ void pfb_free_contexts(pfb_contexts_t *cs)
             free(c->in_fname);
             free(c->out_fname);
             free_DomainView(&c->dv);
+            free_carry_over(&c->co);
             ADD_CC;
         }
 
@@ -477,7 +485,7 @@ void init_ArrayDomainInfo(ArrayDomainInfo_t *array_di, const size_t alloc_contex
         }
 #endif
 
-        array_di->cd[i].next = 0;
+        array_di->cd[i].next_idx = 0;
         array_di->cd[i].alloc_linenumbers = INITIAL_ARRAY_DOMAIN_INFO;
 #ifdef COLLECT_DIAGNOSTICS
         array_di->cd[i].count_realloc_linenumbers = 0;
@@ -495,7 +503,7 @@ void free_ArrayDomainInfo(ArrayDomainInfo_t *array_di)
     {
         ASSERT(array_di->cd);
 #ifdef REGEX_ENABLED
-        for(size_t l = 0; l < array_di->cd[i].next; l++)
+        for(size_t l = 0; l < array_di->cd[i].next_idx; l++)
         {
             free_DomainInfo(&(array_di->cd[i].di[l]));
         }
@@ -508,7 +516,7 @@ void free_ArrayDomainInfo(ArrayDomainInfo_t *array_di)
                 "realloc'ed %u times to final size of %u with %u used.\n",
                 (uint)array_di->cd[i].count_realloc_linenumbers,
                 (uint)array_di->cd[i].alloc_linenumbers,
-                (uint)array_di->cd[i].next);
+                (uint)array_di->cd[i].next_idx);
         LOG_DIAG_CONT("Input file: %s\n\n",
                 array_di->begin_pfb_context[i].in_fname);
 #endif
@@ -526,6 +534,71 @@ void free_ArrayDomainInfo(ArrayDomainInfo_t *array_di)
 #endif
     ADD_CC;
 }
+
+static void resize_ContextLinenumbers(ContextDomain_t *cd, size_t count)
+{
+    ASSERT(cd);
+    ASSERT(count > 0);
+    cd->alloc_linenumbers += count;
+#ifdef COLLECT_DIAGNOSTICS
+    cd->count_realloc_linenumbers++;
+#endif
+#ifdef REGEX_ENABLED
+    DomainInfo_t **tmp_di = realloc(cd->di, sizeof(DomainInfo_t *) * cd->alloc_linenumbers);
+    if(tmp_di)
+    {
+        cd->di = tmp_di;
+        ADD_CC_REGEX;
+    }
+    else
+    {
+        free(cd->di);
+        cd->di = NULL;
+        ELOG_STDERR("ERROR: failed to realloc DomainInfo_t* array\n");
+        exit(EXIT_FAILURE);
+    }
+#else
+    linenumber_t *tmp = realloc(cd->linenumbers, sizeof(linenumber_t) * cd->alloc_linenumbers);
+    if(tmp)
+    {
+        cd->linenumbers = tmp;
+        tmp = NULL;
+        ADD_CC_SINGLE;
+    }
+    else
+    {
+        free(cd->linenumbers);
+        cd->linenumbers = NULL;
+        ELOG_STDERR("ERROR: failed to realloc linenumbers array\n");
+        exit(EXIT_FAILURE);
+    }
+#endif
+    ADD_CC;
+}
+
+#ifndef REGEX_ENABLED
+/**
+ * For non-regex builds only.
+ */
+static void transfer_carry_over(ContextDomain_t *cd, pfb_context_t *pfbc)
+{
+    ASSERT(cd);
+    ASSERT(pfbc);
+    const linenumber_t count = len_carry_over(&pfbc->co);
+
+    if(cd->next_idx + count > cd->alloc_linenumbers)
+    {
+        ASSERT(count > 0);
+        resize_ContextLinenumbers(cd, (cd->next_idx + count - cd->alloc_linenumbers) );
+        ADD_CC;
+    }
+
+    transfer_linenumbers(cd->linenumbers + cd->next_idx, &pfbc->co);
+    cd->next_idx += count;
+
+    ADD_CC;
+}
+#endif
 
 /**
  * Move DomainInfo's to the FILE context specific array.
@@ -551,55 +624,22 @@ static void collect_DomainInfo(DomainInfo_t **di, void *context)
     // move to desired ContextDomain_t
     cd += idx;
 
-    ASSERT(cd->next < cd->alloc_linenumbers + REALLOC_ARRAY_DOMAIN_INFO);
-    if(cd->next >= cd->alloc_linenumbers)
+    if(cd->next_idx >= cd->alloc_linenumbers)
     {
-        cd->alloc_linenumbers += REALLOC_ARRAY_DOMAIN_INFO;
-#ifdef COLLECT_DIAGNOSTICS
-        cd->count_realloc_linenumbers++;
-#endif
-#ifdef REGEX_ENABLED
-        DomainInfo_t **tmp_di = realloc(cd->di, sizeof(DomainInfo_t *) * cd->alloc_linenumbers);
-        if(tmp_di)
-        {
-            cd->di = tmp_di;
-            ADD_CC_REGEX;
-        }
-        else
-        {
-            free(cd->di);
-            cd->di = NULL;
-            ELOG_STDERR("ERROR: failed to realloc DomainInfo_t* array\n");
-            exit(EXIT_FAILURE);
-        }
-#else
-        linenumber_t *tmp = realloc(cd->linenumbers, sizeof(linenumber_t) * cd->alloc_linenumbers);
-        if(tmp)
-        {
-            cd->linenumbers = tmp;
-            tmp = NULL;
-            ADD_CC_SINGLE;
-        }
-        else
-        {
-            free(cd->linenumbers);
-            cd->linenumbers = NULL;
-            ELOG_STDERR("ERROR: failed to realloc linenumbers array\n");
-            exit(EXIT_FAILURE);
-        }
-#endif
+        ASSERT(cd->next_idx < cd->alloc_linenumbers + REALLOC_ARRAY_DOMAIN_INFO);
+        resize_ContextLinenumbers(cd, REALLOC_ARRAY_DOMAIN_INFO);
         ADD_CC;
     }
 
     // steal the DomainInfo from the DomainTree.
     // add the DomainInfo to the flat array referenced by context.
-    ASSERT(cd->next < cd->alloc_linenumbers);
+    ASSERT(cd->next_idx < cd->alloc_linenumbers);
     ASSERT((*di)->linenumber != 0);
 #ifdef REGEX_ENABLED
-    cd->di[cd->next++] = *di;
+    cd->di[cd->next_idx++] = *di;
     *di = NULL;
 #else
-    cd->linenumbers[cd->next++] = (*di)->linenumber;
+    cd->linenumbers[cd->next_idx++] = (*di)->linenumber;
     free_DomainInfo(di);
 #endif
 
@@ -674,37 +714,48 @@ void pfb_consolidate(DomainTree_t **root_dt, ArrayDomainInfo_t *array_di)
     // tree is free'd
     ASSERT(!*root_dt);
 
+#ifndef REGEX_ENABLED
+    for(size_t i = 0; i < array_di->len_cd; i++)
+    {
+        // transfer into 'linenumbers' from array_di->begin_pfb_context + i
+        // similar signature to memmove and memcpy:
+        // void *destination, void *source, size_t num
+        transfer_carry_over(&array_di->cd[i], &array_di->begin_pfb_context[i]);
+    }
+#endif
+
     // this could be done on separate threads.
     for(size_t i = 0; i < array_di->len_cd; i++)
     {
 #ifdef REGEX_ENABLED
 #ifdef DEBUG
         DEBUG_PRINTF("sorting. before sort the line numbers in order are:\n");
-        for(size_t l = 0; l < array_di->cd[i].next; l++)
+        for(size_t l = 0; l < array_di->cd[i].next_idx; l++)
         {
             ASSERT(array_di->cd[i].di[i]->linenumber > 0);
             DEBUG_PRINTF("\t%d\n", array_di->cd[i].di[l]->linenumber);
         }
 #endif
         ASSERT(i < array_di->len_cd);
-        qsort(array_di->cd[i].di, array_di->cd[i].next,
+        qsort(array_di->cd[i].di, array_di->cd[i].next_idx,
                 sizeof(DomainInfo_t*), sort_DomainInfo);
 #else
 #ifdef DEBUG
         DEBUG_PRINTF("sorting. before sort the line numbers in order are:\n");
-        for(size_t l = 0; l < array_di->cd[i].next; l++)
+        for(size_t l = 0; l < array_di->cd[i].next_idx; l++)
         {
             DEBUG_PRINTF("\t%d\n", array_di->cd[i].linenumbers[l]);
         }
 #endif
+        // TODO inject into array_di->cd[i].linenumbers the regex line numbers
 
         ASSERT(i < array_di->len_cd);
-        qsort(array_di->cd[i].linenumbers, array_di->cd[i].next,
+        qsort(array_di->cd[i].linenumbers, array_di->cd[i].next_idx,
                 sizeof(linenumber_t), sort_LineNumbers);
 
 #ifdef DEBUG
         DEBUG_PRINTF("sorted. after sort the line numbers in order are:\n");
-        for(size_t l = 0; l < array_di->cd[i].next; l++)
+        for(size_t l = 0; l < array_di->cd[i].next_idx; l++)
         {
             DEBUG_PRINTF("\t%d\n", array_di->cd[i].linenumbers[l]);
         }
@@ -756,26 +807,13 @@ void pfb_write_csv(pfb_contexts_t *cs, ArrayDomainInfo_t *array_di,
 
         // can walk this array of line numbers.
         NextLineContext_t nlc;
-        memset(&nlc, 0, sizeof(NextLineContext_t));
         ASSERT(i < array_di->len_cd);
-#ifdef REGEX_ENABLED
-        // if using regex, this will use the DomainInfo for linenumbers as the
-        // fqd is also around and kept in the struct and linenumbers is omitted
-        // from the ArrayDomainInfo.
-        nlc.di = array_di->cd[i].di;
-        nlc.begin_array = nlc.di;
-        nlc.len = array_di->cd[i].next;
-        nlc.next_linenumber = nlc.di[0]->linenumber;
-#else
-        nlc.linenumbers = array_di->cd[i].linenumbers;
-        nlc.begin_array = nlc.linenumbers;
-        nlc.len = array_di->cd[i].next;
-        nlc.next_linenumber = nlc.linenumbers[0];
-#endif
+        init_NextLineContext(&nlc, &array_di->cd[i]);
+
         // by now, the initial pass and write of regex (if any) is done. now
         // open the output file in append mode to preserve regexes.
         pfb_open_context(c, true);
-        // skip lines until the next line to be read is zero
+        // skip lines until the next_idx line to be read is zero
         if(nlc.next_linenumber != 0)
         {
             read_pfb_line(c, &nlc.next_linenumber, shared_buffer,
@@ -851,6 +889,7 @@ static void test_pfb_init_contexts()
     char *const argv_o[] = {"FileInput_1.work", "Zoo_2.work", "Blarg.work"};
 
     pfb_contexts_t pfbcs, pfbcs_zero;
+    memset(&pfbcs, 1, sizeof(pfb_contexts_t));
     memset(&pfbcs_zero, 0, sizeof(pfb_contexts_t));
 
     // init with zero elements.
@@ -858,6 +897,7 @@ static void test_pfb_init_contexts()
     // verify nothing allocated
     assert(!memcmp(&pfbcs, &pfbcs_zero, sizeof(pfb_contexts_t)));
 
+    memset(&pfbcs, 1, sizeof(pfb_contexts_t));
     pfbcs = pfb_init_contexts(3, ".work", argv_i); // here !!
 
     assert(pfbcs.begin_context);
@@ -1059,7 +1099,7 @@ static void test_init_ArrayDi()
 #else
     assert(array_di.cd[0].linenumbers);
 #endif
-    assert(array_di.cd[0].next == 0);
+    assert(array_di.cd[0].next_idx == 0);
     assert(array_di.cd[0].alloc_linenumbers == INITIAL_ARRAY_DOMAIN_INFO);
 
     free_ArrayDomainInfo(&array_di);
@@ -1668,6 +1708,8 @@ static void test_pfb_insert_2()
     pfb_open_context(pfbc.begin_context, false);
 
     PortLineData_t pld;
+    // column 7 is REGEX_MATCH which means carry over for non-REGEX_ENABLED
+    // builds. this changes from previous behavior.
     pld.data = ",something,that,has,many,columns,2,pfb_insert,wildly";
     pld.linenumber = 10;
     pld.len = strlen(pld.data);
@@ -1679,6 +1721,10 @@ static void test_pfb_insert_2()
 
     assert(!pfbc.begin_context->dt[0]);
 
+#ifndef REGEX_ENABLED
+    assert(len_carry_over(&pfbc.begin_context->co) == 1);
+#endif
+
     free_CsvLineView(&lv_context);
     pfb_free_contexts(&pfbc);
     ADD_TCC;
@@ -1688,8 +1734,12 @@ static void test_pfb_insert_2()
     size_t read = fread(buffer, sizeof(char), 100, check_output);
     fclose(check_output);
 
+#ifdef REGEX_ENABLED
     assert(read == 53);
     assert(!memcmp(buffer, ",something,that,has,many,columns,2,pfb_insert,wildly\n", 53));
+#else
+    assert(read == 0);
+#endif
 
     free(buffer);
 }

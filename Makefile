@@ -26,7 +26,8 @@ RELFLAGS := -O3 -DRELEASE_LOGGING -DNDEBUG
 CFLAGS := -std=c17 -Wall -Wextra -Werror -I$(INCLUDE)
 LFLAGS := -std=c17 -Wall -Wextra -Werror
 
-SRC ?= 
+VERSIONDOTH := include/version.nogit.h
+SRC ?=
 SRCTEST ?= $(SRC)
 
 include src/Submakefile src/tests/Submakefile
@@ -37,7 +38,10 @@ OBJREGEX := $(patsubst %.c,$(DIRREGEX)/%.o,$(SRC))
 OBJTEST := $(patsubst %.c,$(DIRTEST)/%.o,$(SRCTEST))
 OBJCODECOV := $(patsubst %.c,$(DIRCODECOV)/%.o,$(SRCTEST))
 
-$(DIRMAIN)/%.o: %.c
+$(VERSIONDOTH): createversion.sh
+	/bin/sh ./createversion.sh
+
+$(DIRMAIN)/%.o: %.c $(VERSIONDOTH)
 	@mkdir -p $(dir $@)
 	@echo Using $(CC) to compile $< for main debug..
 	@$(CC) -c -I$(INCLUDE) -o $@ $< $(CFLAGS) $(MAINFLAGS)
@@ -96,5 +100,6 @@ codecoverage: $(OBJCODECOV)
 
 .PHONY: clean
 clean:
+	@rm -rf ./$(VERSIONDOTH)
 	@rm -rf ./$(OBJDIR)
 	@rm -rf ./${BINDIR}

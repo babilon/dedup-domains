@@ -4,6 +4,7 @@ SRC_DIR_SOURCE := main.c \
 		  domaintree.c \
 		  rw_pfb_csv.c \
 		  pfb_prune.c \
-		  inputargs.c
+		  inputargs.c \
+		  carry_over.c
 
 SRC += $(addprefix src/, $(SRC_DIR_SOURCE))

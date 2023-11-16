@@ -67,6 +67,9 @@ extern size_t default_buffer_len();
 extern size_t get_max_line_len();
 
 struct pfb_context;
+struct ContextDomain;
+
+extern void init_NextLineContext(NextLineContext_t *nlc, struct ContextDomain *cd);
 
 extern void read_pfb_csv(struct pfb_context *,
         void(*do_stuff)(PortLineData_t const *const plv, struct pfb_context *,

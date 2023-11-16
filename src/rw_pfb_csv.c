@@ -445,6 +445,26 @@ static int writeline(FILE *f, PortLineData_t const *pld)
     return 0; // A-OK
 }
 
+void init_NextLineContext(NextLineContext_t *nlc, ContextDomain_t *cd)
+{
+    memset(nlc, 0, sizeof(NextLineContext_t));
+
+#ifdef REGEX_ENABLED
+    // if using regex, this will use the DomainInfo for linenumbers as the
+    // fqd is also around and kept in the struct and linenumbers is omitted
+    // from the ArrayDomainInfo.
+    nlc->di = cd->di;
+    nlc->begin_array = nlc->di;
+    nlc->len = cd->next_idx;
+    nlc->next_linenumber = nlc->len ? nlc->di[0]->linenumber : 0;
+#else
+    nlc->linenumbers = cd->linenumbers;
+    nlc->begin_array = nlc->linenumbers;
+    nlc->len = cd->next_idx;
+    nlc->next_linenumber = nlc->len ? nlc->linenumbers[0] : 0;
+#endif
+}
+
 void write_pfb_csv_callback(PortLineData_t const *const pld, pfb_context_t *pfbc, void *context)
 {
     ASSERT(pld);

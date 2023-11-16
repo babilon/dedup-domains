@@ -1,0 +1,10 @@
+,input1.line1.com,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,zero.com,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,zeroone.com,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,regex_line_3,,0,acan_oisd_ABP,DNSBL_Compilation,2
+,regex_line_4,,0,acan_oisd_ABP,DNSBL_Compilation,2
+,zoom.com,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,doom.doom.com,,0,acan_oisd_ABP,DNSBL_Compilation,0
+,zoom.doom.com,,0,acan_oisd_ABP,DNSBL_Compilation,0
+,zoom.moon.net,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,zoom.moon.xyz,,0,acan_oisd_ABP,DNSBL_Compilation,1

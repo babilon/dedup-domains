@@ -4,3 +4,6 @@ tests/test_*
 *.o
 *.gch
 *.nogit
+*.nogit.*
+tests/unit_pfb_prune/*.work
+tests/unit_pfb_prune/*.bench

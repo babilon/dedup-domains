@@ -45,6 +45,50 @@ static void test_end2end()
     ADD_TCC;
 }
 
+/**
+ * A file with lines and a file with zero lines.
+ */
+static void test_end2end_empty()
+{
+    char *const argv_i[] = {"tests/unit_pfb_prune/E2ETestInput_1.txt",
+                            "tests/unit_pfb_prune/E2ETest_Empty.txt"};
+
+    do_test_end2end(2, argv_i);
+
+    ADD_TCC;
+}
+
+#ifndef REGEX_ENABLED
+/**
+ * Files with varying amount of lines with regexes.
+ *
+ * Run ./test.real -t -i 10 for maximum effect.
+ * -i for initial allocation. This is exercising the regex lines carried over
+ * during the consolidation step.
+ * -r is optional.
+ */
+static void test_carry_over_end2end()
+{
+                            // exactly 10 lines in all
+    char *const argv_i[] = {"tests/unit_pfb_prune/E2ETestRegexInput_1.txt",
+                            // 8 non-regex, 3 regex: allocate one more
+                            "tests/unit_pfb_prune/E2ETestRegexInput_2.txt",
+                            // space remaining for more: 5 lines
+                            "tests/unit_pfb_prune/E2ETestRegexInput_3.txt",
+                            // empty file
+                            "tests/unit_pfb_prune/E2ETest_Empty.txt",
+                            // 10 regular, 1 regex
+                            "tests/unit_pfb_prune/E2ETestRegexInput_4.txt",
+                            // several
+                            "tests/unit_pfb_prune/E2ETestRegexInput_5.txt"
+    };
+
+    do_test_end2end(6, argv_i);
+
+    ADD_TCC;
+}
+#endif
+
 static void do_test_end2end(const int argc, char *const *argv_i)
 {
     bool use_shared_buffer = true;
@@ -89,6 +133,12 @@ static void do_test_end2end(const int argc, char *const *argv_i)
     init_ArrayDomainInfo(&array_di, pfb_len_contexts(&contexts));
     array_di.begin_pfb_context = contexts.begin_context;
 
+    for(int i = 0; i < argc; i++)
+    {
+        printf("alloc contextdomain=[%d]=%lu\n", i, (size_t)array_di.cd[i].alloc_linenumbers);
+    }
+
+
     pfb_consolidate(contexts.begin_context->dt, &array_di);
     assert(contexts.begin_context->dt);
     assert(!contexts.begin_context->dt[0]);
@@ -114,7 +164,12 @@ void run_tests()
     test_rw_pfb_csv();
     test_pfb_prune();
     test_end2end();
+    test_end2end_empty();
     test_input_args();
+    test_carry_over();
+#ifndef REGEX_ENABLED
+    test_carry_over_end2end();
+#endif
     printf("OK.\n");
 
     printf("Printing info of structs...\n");
@@ -126,4 +181,5 @@ void run_tests()
 
     // code coverage
     print_lineshit();
+
 }

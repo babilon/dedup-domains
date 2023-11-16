@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 #include "inputargs.h"
-#include "version.h"
+#include "version.nogit.h"
 #include <unistd.h>
 #include <getopt.h>
 #include <sys/stat.h>

@@ -33,6 +33,7 @@ extern void test_DomainTree();
 extern void test_pfb_prune();
 extern void test_rw_pfb_csv();
 extern void test_input_args();
+extern void test_carry_over();
 #endif
 
 #endif

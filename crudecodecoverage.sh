@@ -8,7 +8,7 @@ WINLINES=lineshit.win
 /usr/bin/git grep -nE "^\s+(\<ADD_CC\>|\<ADD_TCC\>|\<ADD_CC_SINGLE\>);$" "*.c" | sed 's/:/ /g' | awk '{ printf("%20s %5d\n", $1, $2) }' > ./${TAGLINES}
 
 
-./bin/codecoverage.real -t -i 5 -r 5
+./bin/codecoverage.real -t -i 10 -r 5
 ret=$?
 if [[ $ret -ne 0 ]]; then
     echo "Returned error code: $ret"

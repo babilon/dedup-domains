@@ -21,6 +21,6 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-#define VERSIONID "0.1 <74c2ff3>"
+#define VERSIONID "0.1 <NOREF>"
 
 #endif

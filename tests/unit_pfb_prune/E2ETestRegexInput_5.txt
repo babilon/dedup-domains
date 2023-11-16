@@ -1,0 +1,16 @@
+,input1.line1.jp,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,zero.jp,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,zeroone.jp,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,wanna.be.regex,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,doom.doom.jp,,0,acan_oisd_ABP,DNSBL_Compilation,0
+,zoom.jp,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,doom.doom.jp,,0,acan_oisd_ABP,DNSBL_Compilation,0
+,zoom.doom.jp,,0,acan_oisd_ABP,DNSBL_Compilation,0
+,zoom.moon.jp,,0,acan_oisd_ABP,DNSBL_Compilation,1
+
+,asdf.asdf.jpp,,0,acan_oisd_ABP,DNSBL_Compilation,1
+
+,zoom.jp,,0,acan_oisd_ABP,DNSBL_Compilation,1
+,doom.doom.ap,,0,acan_oisd_ABP,DNSBL_Compilation,0
+,zoom.doom.ap,,0,acan_oisd_ABP,DNSBL_Compilation,0
+,zoom.moon.ap,,0,acan_oisd_ABP,DNSBL_Compilation,1

@@ -21,6 +21,7 @@
 #ifndef PFB_PRUNE_H
 #define PFB_PRUNE_H
 #include "dedupdomains.h"
+#include "carry_over.h"
 #include "domain.h"
 
 /**
@@ -35,7 +36,20 @@ typedef struct pfb_context
     char *in_fname;
     char *out_fname;
     struct DomainTree **dt;
+    /**
+     * Transitional payload during pfb_insert(). Carries CsvLineView data
+     * through insert_DomainTree() for insertion (if unique) into the
+     * DomainTree. Initialized once. Free'ed in pfb_close_context().
+     */
     DomainView_t dv;
+    /**
+     * Line numbers in 'in_fname' to carry over without modification. These are
+     * not inserted into the DomainTree. They are not omitted by any rules.
+     * Typically these refer to regex lines in the original file. Tracking these
+     * here preserves their original order in the input file. These are carried
+     * until pfb_consolidate().
+     */
+    carry_over_t co;
 } pfb_context_t;
 
 typedef struct pfb_contexts
@@ -55,7 +69,7 @@ typedef struct ContextDomain
     // only need the line numbers when writing to final output.
     linenumber_t *linenumbers;
 #endif
-    size_len_t next; // length and the next spot to insert.
+    size_len_t next_idx; // length and the next spot to insert.
     size_len_t alloc_linenumbers; // total space allocated/available
 
 #ifdef COLLECT_DIAGNOSTICS
