@@ -1,6 +1,11 @@
 #ifndef LOG_DIAGNOSTICS_H
 #define LOG_DIAGNOSTICS_H
 
+extern void open_globalStdLog();
+FILE *get_globalStdLog();
+extern void close_globalStdLog();
+extern void free_globalStdLog();
+
 #ifdef COLLECT_DIAGNOSTICS
 #define BORROW_SPACES \
     char *spaces_str = NULL; \
@@ -17,18 +22,31 @@
 
 #define LOG_DIAG(clsname, ptr, fmt, ...) do { \
 BORROW_SPACES; \
-fprintf(stdout, "[%s:%s] %s %p\n" \
+open_globalStdLog(); \
+fprintf(get_globalStdLog(), "[%s:%s] %s %p\n" \
         " %s   " fmt, \
         __FILE__, __FUNCTION__, clsname, ptr, \
         spaces_str, __VA_ARGS__); \
+close_globalStdLog(); \
 RETURN_SPACES; \
 } while(0)
 
 #define LOG_DIAG_CONT(fmt, ...) do { \
 BORROW_SPACES; \
-fprintf(stdout, " %s   " fmt, \
+open_globalStdLog(); \
+fprintf(get_globalStdLog(), " %s   " fmt, \
         spaces_str, __VA_ARGS__); \
+close_globalStdLog(); \
 RETURN_SPACES; \
+} while(0)
+
+#define LOG_STR(fmt, ...) do { \
+open_globalStdLog(); \
+fprintf(get_globalStdLog(), "[%s:%s] " \
+        fmt, \
+        __FILE__, __FUNCTION__, \
+        __VA_ARGS__); \
+close_globalStdLog(); \
 } while(0)
 
 #endif

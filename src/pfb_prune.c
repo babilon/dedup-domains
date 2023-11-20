@@ -747,8 +747,6 @@ void pfb_consolidate(DomainTree_t **root_dt, ArrayDomainInfo_t *array_di)
             DEBUG_PRINTF("\t%d\n", array_di->cd[i].linenumbers[l]);
         }
 #endif
-        // TODO inject into array_di->cd[i].linenumbers the regex line numbers
-
         ASSERT(i < array_di->len_cd);
         qsort(array_di->cd[i].linenumbers, array_di->cd[i].next_idx,
                 sizeof(linenumber_t), sort_LineNumbers);

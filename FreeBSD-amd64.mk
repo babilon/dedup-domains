@@ -11,7 +11,7 @@ DIRTEST := $(OBJDIR)/test
 DIRCODECOV := $(OBJDIR)/codecov
 DIRTEST_SIZE_T := $(OBJDIR)/test_size_t
 
-INCLUDE := include/
+INCLUDE := -Iinclude/ -Igenerated/include/
 
 MEMSET := -DUSE_MEMSET
 SIZE_T := -DUSE_SIZE_T
@@ -23,12 +23,12 @@ TESTFLAGS := $(DEBUGFLAG) -DBUILD_TESTS $(SIZE_T) $(MEMSET)
 CODECOVFLAGS := $(DEBUGFLAG) $(TESTFLAGS) $(CODECOV)
 MAINFLAGS := $(DEBUGFLAG) $(DIAGNO)
 REGEXFLAGS := $(DEBUGFLAG) $(DIAGNO) -DREGEX_ENABLED
-RELFLAGS := -O3 -DRELEASE_LOGGING -DNDEBUG
+RELFLAGS := -O3 -DRELEASE_LOGGING -DCOLLECT_DIAGNOSTICS -DNDEBUG
 
-CFLAGS := -std=c17 -Wall -Wextra -Werror -I$(INCLUDE)
+CFLAGS := -std=c17 -Wall -Wextra -Werror
 LFLAGS := -std=c17 -Wall -Wextra -Werror
 
-VERSIONDOTH := include/version.nogit.h
+VERSIONDOTH := include/version.h
 SRC ?=
 SRCTEST ?= $(SRC)
 
@@ -39,73 +39,74 @@ OBJMAIN := $(patsubst %.c,$(DIRMAIN)/%.o,$(SRC))
 OBJREGEX := $(patsubst %.c,$(DIRREGEX)/%.o,$(SRC))
 OBJTEST := $(patsubst %.c,$(DIRTEST)/%.o,$(SRCTEST))
 OBJCODECOV := $(patsubst %.c,$(DIRCODECOV)/%.o,$(SRCTEST))
+VERSIONNOGIT := $(patsubst %.h,generated/%.nogit.h,$(VERSIONDOTH))
 
-$(VERSIONDOTH): createversion.sh
+generated/%.nogit.h: $(VERSIONDOTH) createversion.sh
 	/bin/sh ./createversion.sh
 
-$(DIRMAIN)/%.o: %.c $(VERSIONDOTH)
+$(DIRMAIN)/%.o: %.c
 	@mkdir -p $(dir $@)
 	@echo Using $(CC) to compile $< for main debug..
-	@$(CC) -c -I$(INCLUDE) -o $@ $< $(CFLAGS) $(MAINFLAGS)
+	@$(CC) -c $(INCLUDE) -o $@ $< $(CFLAGS) $(MAINFLAGS)
 
 $(DIRREGEX)/%.o: %.c
 	@mkdir -p $(dir $@)
 	@echo Using $(CC) to compile $< for regex debug..
-	@$(CC) -c -I$(INCLUDE) -o $@ $< $(CFLAGS) $(REGEXFLAGS)
+	@$(CC) -c $(INCLUDE) -o $@ $< $(CFLAGS) $(REGEXFLAGS)
 
 $(DIRTEST)/%.o: %.c
 	@echo $@
 	@mkdir -p $(dir $@)
 	@echo Compiling $< for unit testing..
-	@$(CC) -c -I$(INCLUDE) -o $@ $< $(CFLAGS) $(TESTFLAGS)
+	@$(CC) -c $(INCLUDE) -o $@ $< $(CFLAGS) $(TESTFLAGS)
 
 $(DIRCODECOV)/%.o: %.c
 	@mkdir -p $(dir $@)
 	@echo Compiling $< for code coverage..
-	@$(CC) -c -I$(INCLUDE) -o $@ $< $(CFLAGS) $(CODECOVFLAGS)
+	@$(CC) -c $(INCLUDE) -o $@ $< $(CFLAGS) $(CODECOVFLAGS)
 
 $(DIRREL)/%.o: %.c
 	@mkdir -p $(dir $@)
 	@echo Compiling $< for release..
-	@$(CC) -c -I$(INCLUDE) -o $@ $< $(CFLAGS) $(RELFLAGS)
+	@$(CC) -c $(INCLUDE) -o $@ $< $(CFLAGS) $(RELFLAGS)
 
 .PHONY: all
 all: main regex release test codecoverage
 
-main: $(OBJMAIN)
+main: $(VERSIONNOGIT) $(OBJMAIN)
 	@echo Linking $@
 	@mkdir -p ${BINDIR}
-	@$(CC) $(LFLAGS) $^ -o ./${BINDIR}/$@-BSD.real
+	@$(CC) $(LFLAGS) $(OBJMAIN) -o ./${BINDIR}/$@.real
 
-regex: $(OBJREGEX)
+regex: $(VERSIONNOGIT) $(OBJREGEX)
 	@echo Linking $@
 	@mkdir -p ${BINDIR}
-	@$(CC) $(LFLAGS) $^ -o ./${BINDIR}/$@-BSD.real
+	@$(CC) $(LFLAGS) $(OBJREGEX) -o ./${BINDIR}/$@.real
 	@echo "NOTICE: regex pruning is not implemented yet."
 
-release: $(OBJREL)
+release: $(VERSIONNOGIT) $(OBJREL)
 	@echo Linking $@
 	@mkdir -p ${BINDIR}
-	@$(CC) $(FLAGS) $^ -o ./${BINDIR}/$@-BSD.real
+	@$(CC) $(FLAGS) $(OBJREL) -o ./${BINDIR}/$@.real
 
 fpos: obj/testfpos.o
 	@mkdir -p ${BINDIR}
-	@$(CC) $(LFLAGS) $^ -o ./${BINDIR}/$@-BSD.real
+	@$(CC) $(LFLAGS) $^ -o ./${BINDIR}/$@.real
 
-test: $(OBJTEST)
+test: $(VERSIONNOGIT) $(OBJTEST)
 	@mkdir -p ${BINDIR}
-	@$(CC) $(CFLAGS) $(TESTFLAGS) $^ -o ./${BINDIR}/$@-BSD.real
+	@$(CC) $(CFLAGS) $(TESTFLAGS) $(OBJTEST) -o ./${BINDIR}/$@.real
 
-testsizet: $(OBJTEST_SIZE_T)
+testsizet: $(VERSIONNOGIT) $(OBJTEST_SIZE_T)
 	@mkdir -p ${BINDIR}
-	@$(CC) $(CFLAGS) $(TESTFLAGS) $(SIZE_T) $^ -o ./${BINDIR}/$@-BSD.real
+	@$(CC) $(CFLAGS) $(TESTFLAGS) $(SIZE_T) $(OBJTEST_SIZE_T) -o ./${BINDIR}/$@.real
 
-codecoverage: $(OBJCODECOV)
+codecoverage: $(VERSIONNOGIT) $(OBJCODECOV)
 	@mkdir -p ${BINDIR}
-	@$(CC) $(CFLAGS) $(CODECOVFLAGS) $^ -o ./${BINDIR}/$@-BSD.real
+	@$(CC) $(CFLAGS) $(CODECOVFLAGS) $(OBJCODECOV) -o ./${BINDIR}/$@.real
 
 .PHONY: clean
 clean:
-	@rm -rf ./$(VERSIONDOTH)
+	@rm -rf ./generated/
 	@rm -rf ./$(OBJDIR)
 	@rm -rf ./${BINDIR}

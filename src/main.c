@@ -169,10 +169,11 @@ int main(int argc, char *const * argv)
     ASSERT(!array_di.begin_pfb_context);
 
 #ifdef COLLECT_DIAGNOSTICS
-    printf("Collected %lu unique domains.\n", collected_domains_counter);
+    LOG_STR("Collected %lu unique domains.\n", collected_domains_counter);
 #endif
 
     free_globalErrLog();
+    free_globalStdLog();
 
     return 0;
 }

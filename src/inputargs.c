@@ -101,24 +101,25 @@ static FILE *get_elogFile(input_args_t *iargs)
 #endif
 }
 
-typedef struct globalErrLog
+typedef struct globalLog
 {
     const char *log_fname;
-    FILE *errFile;
-} globalErrLog_t;
+    FILE *file;
+} globalLog_t;
 
-static globalErrLog_t *global_log = NULL;
+static globalLog_t *global_errLog = NULL;
+static globalLog_t *global_stdLog = NULL;
 
 void open_globalErrLog()
 {
-    if(global_log)
+    if(global_errLog)
     {
-        if(global_log->log_fname && global_log->errFile == NULL)
+        if(global_errLog->log_fname && global_errLog->file == NULL)
         {
-            global_log->errFile = fopen(global_log->log_fname, "ab");
-            if(!global_log->errFile)
+            global_errLog->file = fopen(global_errLog->log_fname, "ab");
+            if(!global_errLog->file)
             {
-                fprintf(stderr, "ERROR: Unable to open %s for append writing.\n", global_log->log_fname);
+                fprintf(stderr, "ERROR: Unable to open %s for append writing.\n", global_errLog->log_fname);
             }
             ADD_CC;
         }
@@ -129,11 +130,11 @@ void open_globalErrLog()
 
 void close_globalErrLog()
 {
-    if(global_log && global_log->log_fname && global_log->errFile &&
-            global_log->errFile != stderr)
+    if(global_errLog && global_errLog->log_fname && global_errLog->file &&
+            global_errLog->file != stderr)
     {
-        fclose(global_log->errFile);
-        global_log->errFile = NULL;
+        fclose(global_errLog->file);
+        global_errLog->file = NULL;
         ADD_CC;
     }
     ADD_CC;
@@ -141,10 +142,10 @@ void close_globalErrLog()
 
 FILE *get_globalErrLog()
 {
-    if(global_log && global_log->log_fname && global_log->errFile)
+    if(global_errLog && global_errLog->log_fname && global_errLog->file)
     {
         ADD_CC;
-        return global_log->errFile;
+        return global_errLog->file;
     }
 
     ADD_CC;
@@ -153,10 +154,61 @@ FILE *get_globalErrLog()
 
 void free_globalErrLog()
 {
-    if(global_log)
+    if(global_errLog)
     {
-        free(global_log);
-        global_log = NULL;
+        free(global_errLog);
+        global_errLog = NULL;
+    }
+}
+
+void open_globalStdLog()
+{
+    if(global_stdLog)
+    {
+        if(global_stdLog->log_fname && global_stdLog->file == NULL)
+        {
+            global_stdLog->file = fopen(global_stdLog->log_fname, "ab");
+            if(!global_stdLog->file)
+            {
+                fprintf(stderr, "ERROR: Unable to open %s for append writing.\n", global_stdLog->log_fname);
+            }
+            ADD_CC;
+        }
+        ADD_CC;
+    }
+    ADD_CC;
+}
+
+void close_globalStdLog()
+{
+    if(global_stdLog && global_stdLog->log_fname && global_stdLog->file &&
+            global_stdLog->file != stderr)
+    {
+        fclose(global_stdLog->file);
+        global_stdLog->file = NULL;
+        ADD_CC;
+    }
+    ADD_CC;
+}
+
+FILE *get_globalStdLog()
+{
+    if(global_stdLog && global_stdLog->log_fname && global_stdLog->file)
+    {
+        ADD_CC;
+        return global_stdLog->file;
+    }
+
+    ADD_CC;
+    return stdout;
+}
+
+void free_globalStdLog()
+{
+    if(global_stdLog)
+    {
+        free(global_stdLog);
+        global_stdLog = NULL;
     }
 }
 
@@ -275,7 +327,7 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
                 iargs->errLog_fname = optarg;
                 ADD_CC;
                 break;
-            case 'i':
+            case 'i': // # elements for initial alloc buffer
                 if(!iargs->override_buffersize)
                 {
                     iargs->override_buffersize = true;
@@ -289,7 +341,7 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
                     ADD_CC;
                 }
                 break;
-            case 'r':
+            case 'r': // # elements for realloc buffers
                 if(!iargs->override_reallocsize)
                 {
                     iargs->override_reallocsize = true;
@@ -336,8 +388,9 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
             case '?':
             default:
                 ELOG_IFARGS(iargs, "Usage: %s "
-                        "[-stb] "
+                        "[-vstb] "
                         "[-L <log file>] "
+                        "[-E <errlog file>] "
                         "[-i <NUMBER>] "
                         "[-r <NUMBER>] "
                         "[-d <directory>] "
@@ -385,12 +438,15 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
             return false;
         }
         ADD_CC;
+
+        global_stdLog = calloc(1, sizeof(globalLog_t));
+        global_stdLog->log_fname = iargs->log_fname;
     }
 
     if(iargs->errLog_flag)
     {
-        global_log = calloc(1, sizeof(globalErrLog_t));
-        global_log->log_fname = iargs->errLog_fname;
+        global_errLog = calloc(1, sizeof(globalLog_t));
+        global_errLog->log_fname = iargs->errLog_fname;
     }
 
 #ifdef BUILD_TESTS
@@ -963,14 +1019,14 @@ static void test_parse_input()
 static void test_errLog()
 {
     // static initialized global variable
-    assert(!global_log);
+    assert(!global_errLog);
     assert(get_globalErrLog() == stderr);
 
     input_args_t args;
     init_input_args(&args);
 
     // not affected by input_args_t
-    assert(!global_log);
+    assert(!global_errLog);
     assert(get_globalErrLog() == stderr);
 
     char *arg1[] = {"files1.real", "-E", "./tests/test_errout.log", "./tests/001_inputs/EasyList_Chinese.fat"};
@@ -981,32 +1037,32 @@ static void test_errLog()
     assert(0 == strcmp(args.errLog_fname, "./tests/test_errout.log"));
 
     free_input_args(&args);
-    
+
     // flags reset after free
     assert(!args.errLog_flag);
     assert(!args.errLog_fname);
 
     // if errLog_flag was set, this is initialized non-nil.
-    assert(global_log);
-    assert(0 == strcmp(global_log->log_fname, "./tests/test_errout.log"));
-    assert(!global_log->errFile);
+    assert(global_errLog);
+    assert(0 == strcmp(global_errLog->log_fname, "./tests/test_errout.log"));
+    assert(!global_errLog->file);
     assert(get_globalErrLog() == stderr);
 
     open_globalErrLog();
 
-    assert(0 == strcmp(global_log->log_fname, "./tests/test_errout.log"));
-    assert(global_log->errFile);
-    assert(global_log->errFile != stderr);
+    assert(0 == strcmp(global_errLog->log_fname, "./tests/test_errout.log"));
+    assert(global_errLog->file);
+    assert(global_errLog->file != stderr);
 
     ELOG_STDERR("TEST: this is a test\n");
 
     close_globalErrLog();
-    assert(global_log);
-    assert(!global_log->errFile);
+    assert(global_errLog);
+    assert(!global_errLog->file);
     assert(get_globalErrLog() == stderr);
 
     free_input_args(&args);
-    free(global_log);
+    free(global_errLog);
     ADD_TCC;
 }
 
