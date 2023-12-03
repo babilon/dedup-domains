@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+#PATH="/usr/local/bin:$PATH"
+dir="`git rev-parse --show-toplevel`"
+trap 'rm -f "$dir/$$.tags"' EXIT
+ctags --options=NONE --options=$dir/etc/ctags.opts \
+    -R --tag-relative=yes -f "$dir/.$$.tags" \
+    include \
+    src \
+    *.py
+#git ls-files | ctags --tag-relative=yes -f "$dir/../$$.tags" --fields=+aimlS --languages=c,php --PHP-kinds=+cdfint-av --exclude=composer.phar --exclude=*Test.php --exclude=*phpunit* -L -
+mv "$dir/.$$.tags" "$dir/.tags"

@@ -1,0 +1,7 @@
+--links=no
+--languages=C,Python
+--exclude=.*
+--exclude=*~
+--c-kinds=-m
+--python-kinds=-m
+--extras=+fq
