@@ -30,6 +30,20 @@ static const size_t READ_BUFFER_SIZE = 4096;
 // what is a reasonable length for a line in csv file?
 static const size_t MAX_ACCEPTABLE_LINE_LENGTH = READ_BUFFER_SIZE * 0.5;
 static const size_t MAX_ALLOC_LINE = MAX_ACCEPTABLE_LINE_LENGTH + 1; // for null terminator
+																	 //
+/**
+ * Holds a copy of line data. Guaranteed to be null terminated and correspond to
+ * a line in the file that ended in \r and/or \n. The data will not contain \r
+ * or \n.
+ */
+typedef struct LineData
+{
+	char *buffer;
+	char *pos;
+	size_t len;
+	size_t alloc;
+	linenumber_t linenumber;
+} LineData_t;
 
 size_t default_buffer_len()
 {

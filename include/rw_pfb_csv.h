@@ -32,20 +32,6 @@ typedef struct PortLineData
 	linenumber_t linenumber;
 } PortLineData_t;
 
-/**
- * Holds a copy of line data. Guaranteed to be null terminated and correspond to
- * a line in the file that ended in \r and/or \n. The data will not contain \r
- * or \n.
- */
-typedef struct LineData
-{
-	char *buffer;
-	char *pos;
-	size_t len;
-	size_t alloc;
-	linenumber_t linenumber;
-} LineData_t;
-
 typedef struct NextLineContext
 {
 	linenumber_t *linenumbers;
