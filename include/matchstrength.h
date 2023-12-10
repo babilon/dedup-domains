@@ -23,11 +23,11 @@
 
 typedef enum MatchStrength
 {
-    MATCH_BOGUS = -2,
-    MATCH_NOTSET = -1,
-    MATCH_WEAK = 0,
-    MATCH_FULL = 1,
-    MATCH_REGEX = 2
+	MATCH_BOGUS = -2,
+	MATCH_NOTSET = -1,
+	MATCH_WEAK = 0,
+	MATCH_FULL = 1,
+	MATCH_REGEX = 2
 } MatchStrength_t;
 
 #endif

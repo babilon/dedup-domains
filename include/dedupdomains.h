@@ -46,16 +46,16 @@
 
 #elif defined(EXIT_ON_FATAL)
 #define ASSERT(x) do { \
-    if(!(x)) { \
-        ELOG_STDERR("[%s:%d] %s: 'ASSERT' failed: %s\n", __FILE__, __LINE__, __FUNCTION__, #x); \
-        exit(EXIT_FAILURE); \
-    } while(0)
+	if(!(x)) { \
+		ELOG_STDERR("[%s:%d] %s: 'ASSERT' failed: %s\n", __FILE__, __LINE__, __FUNCTION__, #x); \
+		exit(EXIT_FAILURE); \
+	} while(0)
 
 #elif defined(LOG_AND_CONTINUE)
 #define ASSERT(x) do { \
-    if(!(x)) { \
-        ELOG_STDERR("[%s:%d] %s: 'ASSERT' failed: %s\n", __FILE__, __LINE__, __FUNCTION__, #x); \
-    } \
+	if(!(x)) { \
+		ELOG_STDERR("[%s:%d] %s: 'ASSERT' failed: %s\n", __FILE__, __LINE__, __FUNCTION__, #x); \
+	} \
 } while(0)
 #else
 #define ASSERT(x) assert((x))
@@ -80,7 +80,7 @@ typedef uint size_len_t;
 
 #if 0
 #define DEBUG_PRINTF(fmt, ...) do { \
-    fprintf(stdout, fmt, ##__VA_ARGS__); \
+	fprintf(stdout, fmt, ##__VA_ARGS__); \
 } while(0)
 #else
 #define DEBUG_PRINTF(fmt, ...)
@@ -92,9 +92,9 @@ extern void close_globalErrLog();
 extern void free_globalErrLog();
 
 #define ELOG_STDERR(fmt, ...) do { \
-    open_globalErrLog(); \
-    fprintf(get_globalErrLog(), fmt, ##__VA_ARGS__); \
-    close_globalErrLog(); \
+	open_globalErrLog(); \
+	fprintf(get_globalErrLog(), fmt, ##__VA_ARGS__); \
+	close_globalErrLog(); \
 } while(0)
 
 #endif

@@ -31,69 +31,69 @@
  */
 typedef struct pfb_context
 {
-    FILE *in_file;
-    FILE *out_file;
-    char *in_fname;
-    char *out_fname;
-    struct DomainTree **dt;
-    /**
-     * Transitional payload during pfb_insert(). Carries CsvLineView data
-     * through insert_DomainTree() for insertion (if unique) into the
-     * DomainTree. Initialized once. Free'ed in pfb_close_context().
-     */
-    DomainView_t dv;
-    /**
-     * Line numbers in 'in_fname' to carry over without modification. These are
-     * not inserted into the DomainTree. They are not omitted by any rules.
-     * Typically these refer to regex lines in the original file. Tracking these
-     * here preserves their original order in the input file. These are carried
-     * until pfb_consolidate().
-     */
-    carry_over_t co;
+	FILE *in_file;
+	FILE *out_file;
+	char *in_fname;
+	char *out_fname;
+	struct DomainTree **dt;
+	/**
+	 * Transitional payload during pfb_insert(). Carries CsvLineView data
+	 * through insert_DomainTree() for insertion (if unique) into the
+	 * DomainTree. Initialized once. Free'ed in pfb_close_context().
+	 */
+	DomainView_t dv;
+	/**
+	 * Line numbers in 'in_fname' to carry over without modification. These are
+	 * not inserted into the DomainTree. They are not omitted by any rules.
+	 * Typically these refer to regex lines in the original file. Tracking these
+	 * here preserves their original order in the input file. These are carried
+	 * until pfb_consolidate().
+	 */
+	carry_over_t co;
 } pfb_context_t;
 
 typedef struct pfb_contexts
 {
-    pfb_context_t *begin_context;
-    pfb_context_t *end_context;
+	pfb_context_t *begin_context;
+	pfb_context_t *end_context;
 } pfb_contexts_t;
 
 typedef struct ContextDomain
 {
 #ifdef REGEX_ENABLED
-    // regex trimming might be done during consolidation or after consolidation.
-    // the full domain is necessary to check against regex. regexes may be found
-    // after reading some or all of the files.
-    struct DomainInfo **di;
+	// regex trimming might be done during consolidation or after consolidation.
+	// the full domain is necessary to check against regex. regexes may be found
+	// after reading some or all of the files.
+	struct DomainInfo **di;
 #else
-    // only need the line numbers when writing to final output.
-    linenumber_t *linenumbers;
+	// only need the line numbers when writing to final output.
+	linenumber_t *linenumbers;
 #endif
-    size_len_t next_idx; // length and the next spot to insert.
-    size_len_t alloc_linenumbers; // total space allocated/available
+	size_len_t next_idx; // length and the next spot to insert.
+	size_len_t alloc_linenumbers; // total space allocated/available
 
 #ifdef COLLECT_DIAGNOSTICS
-    size_len_t count_realloc_linenumbers;
+	size_len_t count_realloc_linenumbers;
 #endif
 } ContextDomain_t;
 
 typedef struct ArrayDomainInfo
 {
-    // one of these for each pfb_context_t
-    ContextDomain_t *cd;
-    // number of ContextDomain allocated
-    // same size as pfb_contexts_t::end_context - pfb_contexts_t::begin_context
-    size_len_t len_cd;
+	// one of these for each pfb_context_t
+	ContextDomain_t *cd;
+	// number of ContextDomain allocated
+	// same size as pfb_contexts_t::end_context - pfb_contexts_t::begin_context
+	size_len_t len_cd;
 
-    // used to calculate the index into 'cd'. the pfb_context_t array and the
-    // 'cd' array are the same size.  this is here because collect_DomainInfo()
-    // will have a DomainInfo with a context pointer and will use it to
-    // calculate the index into the 'cd' array.
-    pfb_context_t *begin_pfb_context;
+	// used to calculate the index into 'cd'. the pfb_context_t array and the
+	// 'cd' array are the same size.  this is here because collect_DomainInfo()
+	// will have a DomainInfo with a context pointer and will use it to
+	// calculate the index into the 'cd' array.
+	pfb_context_t *begin_pfb_context;
 } ArrayDomainInfo_t;
 
 extern pfb_contexts_t pfb_init_contexts(size_t alloc_contexts, const char *out_ext,
-        char *const * argv);
+		char *const * argv);
 
 extern size_t pfb_len_contexts(pfb_contexts_t *cs);
 extern void pfb_free_contexts(pfb_contexts_t *cs);

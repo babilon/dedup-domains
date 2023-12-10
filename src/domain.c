@@ -36,83 +36,83 @@ static const uint DOMAIN_INIT_ALLOC = 4;
 void init_DomainView(DomainView_t *dv)
 {
 #ifdef USE_MEMSET
-    memset(dv, 0, sizeof(DomainView_t));
+	memset(dv, 0, sizeof(DomainView_t));
 #else
-    dv->fqd = NULL;
-    dv->len = 0;
-    dv->segs_used = 0;
-    dv->linenumber = 0;
+	dv->fqd = NULL;
+	dv->len = 0;
+	dv->segs_used = 0;
+	dv->linenumber = 0;
 #ifdef COLLECT_DIAGNOSTICS
-    dv->max_used = 0;
-    dv->count_realloc = 0;
+	dv->max_used = 0;
+	dv->count_realloc = 0;
 #endif
 #endif
 
-    dv->match_strength = MATCH_NOTSET;
+	dv->match_strength = MATCH_NOTSET;
 
-    // a lot of domains will have at least two. many will have more than two. a
-    // default is a starting point. this 'view' is reused. the DomainInfo is a
-    // copy of the domain and allocated to hold exactly as many segements as is
-    // necessary
-    dv->segs_alloc = DOMAIN_INIT_ALLOC;
+	// a lot of domains will have at least two. many will have more than two. a
+	// default is a starting point. this 'view' is reused. the DomainInfo is a
+	// copy of the domain and allocated to hold exactly as many segements as is
+	// necessary
+	dv->segs_alloc = DOMAIN_INIT_ALLOC;
 
-    dv->label_indexes = malloc(sizeof(size_len_t) * DOMAIN_INIT_ALLOC);
-    if(!dv->label_indexes)
-    {
-        exit(EXIT_FAILURE);
-    }
+	dv->label_indexes = malloc(sizeof(size_len_t) * DOMAIN_INIT_ALLOC);
+	if(!dv->label_indexes)
+	{
+		exit(EXIT_FAILURE);
+	}
 
-    dv->lengths = malloc(sizeof(uchar) * DOMAIN_INIT_ALLOC);
-    if(!dv->lengths)
-    {
-        exit(EXIT_FAILURE);
-    }
+	dv->lengths = malloc(sizeof(uchar) * DOMAIN_INIT_ALLOC);
+	if(!dv->lengths)
+	{
+		exit(EXIT_FAILURE);
+	}
 
-    ADD_CC;
+	ADD_CC;
 }
 
 void free_DomainView(DomainView_t *dv)
 {
-    ASSERT(dv);
-    free(dv->lengths);
-    free(dv->label_indexes);
+	ASSERT(dv);
+	free(dv->lengths);
+	free(dv->label_indexes);
 
 #ifdef COLLECT_DIAGNOSTICS
-    if(dv->count_realloc > 0)
-    {
-        LOG_DIAG("DomainView", dv,
-                "guts realloc'ed %lu times to final size of %lu with %lu used.\n\n",
-                (size_t)dv->count_realloc, (size_t)dv->segs_alloc,
-                (size_t)dv->max_used);
-    }
-    else if(!dv->lengths)
-    {
-        // not an interesting statistic
-    }
-    else
-    {
-        LOG_DIAG("DomainView", dv,
-                "guts were never realloc'ed beyond initial size of %lu with %lu used.\n\n",
-                (size_t)dv->segs_alloc, (size_t)dv->max_used);
-    }
+	if(dv->count_realloc > 0)
+	{
+		LOG_DIAG("DomainView", dv,
+				"guts realloc'ed %lu times to final size of %lu with %lu used.\n\n",
+				(size_t)dv->count_realloc, (size_t)dv->segs_alloc,
+				(size_t)dv->max_used);
+	}
+	else if(!dv->lengths)
+	{
+		// not an interesting statistic
+	}
+	else
+	{
+		LOG_DIAG("DomainView", dv,
+				"guts were never realloc'ed beyond initial size of %lu with %lu used.\n\n",
+				(size_t)dv->segs_alloc, (size_t)dv->max_used);
+	}
 #endif
 
 #ifdef USE_MEMSET
-    memset(dv, 0, sizeof(DomainView_t));
+	memset(dv, 0, sizeof(DomainView_t));
 #else
-    dv->fqd = NULL;
-    dv->len = 0;
-    dv->label_indexes = NULL;
-    dv->lengths = NULL;
-    dv->segs_alloc = 0;
-    dv->segs_used = 0;
+	dv->fqd = NULL;
+	dv->len = 0;
+	dv->label_indexes = NULL;
+	dv->lengths = NULL;
+	dv->segs_alloc = 0;
+	dv->segs_used = 0;
 #ifdef COLLECT_DIAGNOSTICS
-    dv->count_realloc = 0;
-    dv->max_used = 0;
+	dv->count_realloc = 0;
+	dv->max_used = 0;
 #endif
 #endif
 
-    ADD_CC;
+	ADD_CC;
 }
 
 /**
@@ -120,50 +120,50 @@ void free_DomainView(DomainView_t *dv)
  * inserted if at all. as each segment needs to be looked up individually.
  */
 static bool get_SubdomainView(DomainView_t *dv, size_len_t idx,
-        SubdomainView_t *sdv)
+		SubdomainView_t *sdv)
 {
 #ifdef USE_MEMSET
-    memset(sdv, 0, sizeof(SubdomainView_t));
+	memset(sdv, 0, sizeof(SubdomainView_t));
 #endif
 
-    if(!dv)
-    {
-        ADD_CC;
-        return false;
-    }
+	if(!dv)
+	{
+		ADD_CC;
+		return false;
+	}
 
-    if(!dv->segs_used)
-    {
-        ADD_CC;
-        return false;
-    }
+	if(!dv->segs_used)
+	{
+		ADD_CC;
+		return false;
+	}
 
-    if(idx > dv->segs_used)
-    {
-        ADD_CC;
-        return false;
-    }
+	if(idx > dv->segs_used)
+	{
+		ADD_CC;
+		return false;
+	}
 
-    sdv->data = dv->fqd + dv->label_indexes[idx];
-    sdv->len = dv->lengths[idx];
+	sdv->data = dv->fqd + dv->label_indexes[idx];
+	sdv->len = dv->lengths[idx];
 
-    ADD_CC;
-    return true;
+	ADD_CC;
+	return true;
 }
 
 DomainViewIter_t begin_DomainView(DomainView_t *dv)
 {
-    DomainViewIter_t it;
+	DomainViewIter_t it;
 
 #ifdef USE_MEMSET
-    memset(&it, 0, sizeof(DomainViewIter_t));
+	memset(&it, 0, sizeof(DomainViewIter_t));
 #endif
 
-    it.cur_seg = 0;
-    it.dv = dv;
+	it.cur_seg = 0;
+	it.dv = dv;
 
-    ADD_CC;
-    return it;
+	ADD_CC;
+	return it;
 }
 
 /**
@@ -172,25 +172,25 @@ DomainViewIter_t begin_DomainView(DomainView_t *dv)
  */
 bool next_DomainView(DomainViewIter_t *it, SubdomainView_t *sdv)
 {
-    bool b = false;
+	bool b = false;
 
-    if(it && it->cur_seg < it->dv->segs_used)
-    {
-        b = get_SubdomainView(it->dv, it->cur_seg, sdv);
-        it->cur_seg += b;
-        ADD_CC;
-    }
+	if(it && it->cur_seg < it->dv->segs_used)
+	{
+		b = get_SubdomainView(it->dv, it->cur_seg, sdv);
+		it->cur_seg += b;
+		ADD_CC;
+	}
 
-    ADD_CC;
-    return b;
+	ADD_CC;
+	return b;
 }
 
 bool null_DomainView(DomainView_t const *dv)
 {
-    ASSERT(dv);
-    // check one of the pointers should be sufficient
-    ADD_CC;
-    return dv->lengths == NULL;
+	ASSERT(dv);
+	// check one of the pointers should be sufficient
+	ADD_CC;
+	return dv->lengths == NULL;
 }
 
 /**
@@ -215,179 +215,179 @@ bool null_DomainView(DomainView_t const *dv)
  */
 bool update_DomainView(DomainView_t *dv, char const *fqd, size_len_t len)
 {
-    ASSERT(dv);
-    if(!fqd || len == 0)
-    {
-        ADD_CC;
-        return false;
-    }
+	ASSERT(dv);
+	if(!fqd || len == 0)
+	{
+		ADD_CC;
+		return false;
+	}
 
-    if(null_DomainView(dv))
-    {
-        ADD_CC;
-        return false;
-    }
+	if(null_DomainView(dv))
+	{
+		ADD_CC;
+		return false;
+	}
 
-    dv->fqd = fqd;
-    dv->len = len;
-    dv->segs_used = 0;
+	dv->fqd = fqd;
+	dv->len = len;
+	dv->segs_used = 0;
 
-    char const *begin = dv->fqd;
-    char const *end = begin + dv->len - 1;
-    char const *c = end;
-    char const *prev = c;
+	char const *begin = dv->fqd;
+	char const *end = begin + dv->len - 1;
+	char const *c = end;
+	char const *prev = c;
 
-    while(c != begin)
-    {
-        if(*c == '.')
-        {
-            if(dv->segs_used >= dv->segs_alloc)
-            {
-                dv->segs_alloc += 4;
-                size_len_t *tmpS = realloc(dv->label_indexes, sizeof(size_len_t) * dv->segs_alloc);
-                if(tmpS)
-                {
-                    dv->label_indexes = tmpS;
-                    tmpS = NULL;
-                }
-                else
-                {
-                    free(dv->label_indexes);
-                    exit(EXIT_FAILURE);
-                }
-                uchar *tmp = realloc(dv->lengths, sizeof(uchar) * dv->segs_alloc);
-                if(tmp)
-                {
-                    dv->lengths = tmp;
-                    tmp = NULL;
-                }
-                else
-                {
-                    free(dv->lengths);
-                    exit(EXIT_FAILURE);
-                }
+	while(c != begin)
+	{
+		if(*c == '.')
+		{
+			if(dv->segs_used >= dv->segs_alloc)
+			{
+				dv->segs_alloc += 4;
+				size_len_t *tmpS = realloc(dv->label_indexes, sizeof(size_len_t) * dv->segs_alloc);
+				if(tmpS)
+				{
+					dv->label_indexes = tmpS;
+					tmpS = NULL;
+				}
+				else
+				{
+					free(dv->label_indexes);
+					exit(EXIT_FAILURE);
+				}
+				uchar *tmp = realloc(dv->lengths, sizeof(uchar) * dv->segs_alloc);
+				if(tmp)
+				{
+					dv->lengths = tmp;
+					tmp = NULL;
+				}
+				else
+				{
+					free(dv->lengths);
+					exit(EXIT_FAILURE);
+				}
 #ifdef COLLECT_DIAGNOSTICS
-                dv->count_realloc++;
+				dv->count_realloc++;
 #endif
-                ADD_CC;
-            }
-            // 01234567890
-            // www.google.com
-            // b         c  e
-            //
-            dv->label_indexes[dv->segs_used] = (size_t)(c - begin) + 1;
-            // 0123456789
-            // google.com
-            //       c  p
-            //       6  9 => 9-6=3
-            const size_t tmp = prev - c;
-            if(tmp > MAX_DOMAIN_LABEL)
-            {
-                if(tmp > UCHAR_MAX)
-                {
-                    ELOG_STDERR("ERROR: segment is longer than allowable in unsigned char.\n");
-                    ADD_CC;
-                    return false;
-                }
-                else
-                {
-                    ELOG_STDERR("WARNING: segment is longer than allowable maximum.\n");
-                    ADD_CC;
-                }
-                ADD_CC;
-            }
-            dv->lengths[dv->segs_used] = prev - c;
-            dv->segs_used++;
+				ADD_CC;
+			}
+			// 01234567890
+			// www.google.com
+			// b		 c  e
+			//
+			dv->label_indexes[dv->segs_used] = (size_t)(c - begin) + 1;
+			// 0123456789
+			// google.com
+			//	   c  p
+			//	   6  9 => 9-6=3
+			const size_t tmp = prev - c;
+			if(tmp > MAX_DOMAIN_LABEL)
+			{
+				if(tmp > UCHAR_MAX)
+				{
+					ELOG_STDERR("ERROR: segment is longer than allowable in unsigned char.\n");
+					ADD_CC;
+					return false;
+				}
+				else
+				{
+					ELOG_STDERR("WARNING: segment is longer than allowable maximum.\n");
+					ADD_CC;
+				}
+				ADD_CC;
+			}
+			dv->lengths[dv->segs_used] = prev - c;
+			dv->segs_used++;
 
-            // move behind the '.'
-            // google.com
-            //      c
-            //      p
-            c--;
-            prev = c;
-            ADD_CC;
-        }
-        else
-        {
-            c--;
-            ADD_CC;
-        }
-        ADD_CC;
-    }
+			// move behind the '.'
+			// google.com
+			//	  c
+			//	  p
+			c--;
+			prev = c;
+			ADD_CC;
+		}
+		else
+		{
+			c--;
+			ADD_CC;
+		}
+		ADD_CC;
+	}
 
-    if(dv->segs_used >= dv->segs_alloc)
-    {
-        dv->segs_alloc++;
-        size_len_t *tmp = realloc(dv->label_indexes, sizeof(size_len_t) * dv->segs_alloc);
-        if(tmp)
-        {
-            dv->label_indexes = tmp;
-            tmp = NULL;
-        }
-        else
-        {
-            free(dv->label_indexes);
-            exit(EXIT_FAILURE);
-        }
-        uchar *tmpC = realloc(dv->lengths, sizeof(uchar) * dv->segs_alloc);
-        if(tmpC)
-        {
-            dv->lengths = tmpC;
-            tmpC = NULL;
-        }
-        else
-        {
-            free(dv->lengths);
-            exit(EXIT_FAILURE);
-        }
+	if(dv->segs_used >= dv->segs_alloc)
+	{
+		dv->segs_alloc++;
+		size_len_t *tmp = realloc(dv->label_indexes, sizeof(size_len_t) * dv->segs_alloc);
+		if(tmp)
+		{
+			dv->label_indexes = tmp;
+			tmp = NULL;
+		}
+		else
+		{
+			free(dv->label_indexes);
+			exit(EXIT_FAILURE);
+		}
+		uchar *tmpC = realloc(dv->lengths, sizeof(uchar) * dv->segs_alloc);
+		if(tmpC)
+		{
+			dv->lengths = tmpC;
+			tmpC = NULL;
+		}
+		else
+		{
+			free(dv->lengths);
+			exit(EXIT_FAILURE);
+		}
 
-        ADD_CC;
-    }
+		ADD_CC;
+	}
 
-    dv->label_indexes[dv->segs_used] = 0;
-    dv->lengths[dv->segs_used] = prev - c + 1; // off by one
-    dv->segs_used++;
+	dv->label_indexes[dv->segs_used] = 0;
+	dv->lengths[dv->segs_used] = prev - c + 1; // off by one
+	dv->segs_used++;
 #ifdef COLLECT_DIAGNOSTICS
-    if(dv->segs_used > dv->max_used)
-        dv->max_used = dv->segs_used;
+	if(dv->segs_used > dv->max_used)
+		dv->max_used = dv->segs_used;
 #endif
 
-    ADD_CC;
-    return true;
+	ADD_CC;
+	return true;
 }
 
 DomainView_t parse_Domain(char const *fqd, size_len_t len)
 {
-    DomainView_t dv;
+	DomainView_t dv;
 
-    init_DomainView(&dv);
+	init_DomainView(&dv);
 
-    update_DomainView(&dv, fqd, len);
+	update_DomainView(&dv, fqd, len);
 
-    ADD_CC;
-    return dv;
+	ADD_CC;
+	return dv;
 }
 
 #ifdef BUILD_TESTS
 static DomainViewIter_t end_DomainView(DomainView_t *dv)
 {
-    DomainViewIter_t it;
+	DomainViewIter_t it;
 
 #ifdef USE_MEMSET
-    memset(&it, 0, sizeof(DomainViewIter_t));
+	memset(&it, 0, sizeof(DomainViewIter_t));
 #endif
 
-    it.dv = dv;
-    it.cur_seg = it.dv->segs_used;
+	it.dv = dv;
+	it.cur_seg = it.dv->segs_used;
 
-    ADD_CC;
-    return it;
+	ADD_CC;
+	return it;
 }
 
 static bool null_SubdomainView(SubdomainView_t const *const sdv)
 {
-    ADD_CC;
-    return sdv->data == NULL;
+	ADD_CC;
+	return sdv->data == NULL;
 }
 
 /**
@@ -395,317 +395,317 @@ static bool null_SubdomainView(SubdomainView_t const *const sdv)
  */
 static bool prev_DomainView(DomainViewIter_t *it, SubdomainView_t *sdv)
 {
-    bool b = false;
+	bool b = false;
 
-    if(it && it->cur_seg <= it->dv->segs_used)
-    {
-        it->cur_seg--;
-        b = get_SubdomainView(it->dv, it->cur_seg, sdv);
-        ADD_CC;
-    }
+	if(it && it->cur_seg <= it->dv->segs_used)
+	{
+		it->cur_seg--;
+		b = get_SubdomainView(it->dv, it->cur_seg, sdv);
+		ADD_CC;
+	}
 
-    ADD_CC;
-    return b;
+	ADD_CC;
+	return b;
 }
 
 static void test_null_Domain()
 {
-    DomainView_t dv;
-    memset(&dv, 1, sizeof(DomainView_t));
+	DomainView_t dv;
+	memset(&dv, 1, sizeof(DomainView_t));
 
-    assert(!null_DomainView(&dv));
+	assert(!null_DomainView(&dv));
 
-    memset(&dv, 0, sizeof(DomainView_t));
+	memset(&dv, 0, sizeof(DomainView_t));
 
-    assert(null_DomainView(&dv));
+	assert(null_DomainView(&dv));
 
-    init_DomainView(&dv);
+	init_DomainView(&dv);
 
-    assert(!null_DomainView(&dv));
+	assert(!null_DomainView(&dv));
 
-    free_DomainView(&dv);
+	free_DomainView(&dv);
 
-    assert(null_DomainView(&dv));
-    ADD_TCC;
+	assert(null_DomainView(&dv));
+	ADD_TCC;
 }
 
 static void test_free_Domain()
 {
-    DomainView_t dv, dv_zero;
-    memset(&dv, 0, sizeof(DomainView_t));
-    memset(&dv_zero, 0, sizeof(DomainView_t));
+	DomainView_t dv, dv_zero;
+	memset(&dv, 0, sizeof(DomainView_t));
+	memset(&dv_zero, 0, sizeof(DomainView_t));
 
-    free_DomainView(&dv);
+	free_DomainView(&dv);
 
-    // free didn't change the struct
-    assert(!memcmp(&dv_zero, &dv, sizeof(DomainView_t)));
-    ADD_TCC;
+	// free didn't change the struct
+	assert(!memcmp(&dv_zero, &dv, sizeof(DomainView_t)));
+	ADD_TCC;
 }
 
 static void test_init_Domain()
 {
-    DomainView_t dv, dv_zero;
-    memset(&dv, 0xf, sizeof(DomainView_t));
-    memset(&dv_zero, 0, sizeof(DomainView_t));
+	DomainView_t dv, dv_zero;
+	memset(&dv, 0xf, sizeof(DomainView_t));
+	memset(&dv_zero, 0, sizeof(DomainView_t));
 
-    init_DomainView(&dv);
+	init_DomainView(&dv);
 
-    assert(!dv.fqd);
-    assert(dv.len == 0);
-    assert(dv.segs_used == 0);
-    // at least one 'block' of memory allocated to guarantee malloc returns a
-    // non-nil pointer to valid memory. malloc of size zero is undefined on some
-    // systems. the initialize is intended to prepare the struct for usage and
-    // requires a free_CsvLineView() call afterwards.
-    assert(DOMAIN_INIT_ALLOC > 0);
-    assert(dv.segs_alloc == DOMAIN_INIT_ALLOC);
-    assert(dv.label_indexes);
-    assert(dv.lengths);
-    assert(dv.match_strength == -1);
+	assert(!dv.fqd);
+	assert(dv.len == 0);
+	assert(dv.segs_used == 0);
+	// at least one 'block' of memory allocated to guarantee malloc returns a
+	// non-nil pointer to valid memory. malloc of size zero is undefined on some
+	// systems. the initialize is intended to prepare the struct for usage and
+	// requires a free_CsvLineView() call afterwards.
+	assert(DOMAIN_INIT_ALLOC > 0);
+	assert(dv.segs_alloc == DOMAIN_INIT_ALLOC);
+	assert(dv.label_indexes);
+	assert(dv.lengths);
+	assert(dv.match_strength == -1);
 
-    dv.segs_used = 1;
+	dv.segs_used = 1;
 
-    free_DomainView(&dv);
+	free_DomainView(&dv);
 
-    assert(dv.segs_used == 0);
-    assert(dv.segs_alloc == 0);
-    assert(!dv.label_indexes);
-    assert(!dv.lengths);
+	assert(dv.segs_used == 0);
+	assert(dv.segs_alloc == 0);
+	assert(!dv.label_indexes);
+	assert(!dv.lengths);
 
-    assert(null_DomainView(&dv));
+	assert(null_DomainView(&dv));
 
 #ifdef USE_MEMSET
-    assert(!memcmp(&dv_zero, &dv, sizeof(DomainView_t)));
+	assert(!memcmp(&dv_zero, &dv, sizeof(DomainView_t)));
 #endif
-    ADD_TCC;
+	ADD_TCC;
 }
 
 #define ASSERT_DOMAIN_SEG(value, idx) \
-    assert(dv.lengths[idx] == strlen(value)); \
-    assert(!memcmp(dv.fqd + dv.label_indexes[idx], value, strlen(value))); \
+	assert(dv.lengths[idx] == strlen(value)); \
+	assert(!memcmp(dv.fqd + dv.label_indexes[idx], value, strlen(value))); \
 
 static void test_parse_Domain()
 {
-    DomainView_t dv;
+	DomainView_t dv;
 
 #define ASSERT_PARSE(value, segments) \
-    dv = parse_Domain(value, strlen(value)); \
-    assert(dv.len = strlen(value)); \
-    assert(dv.segs_used == segments); \
-    assert(dv.segs_alloc >= segments)
-    ASSERT_PARSE("this.domain.com", 3);
-    ASSERT_DOMAIN_SEG("com", 0);
-    ASSERT_DOMAIN_SEG("domain", 1);
-    ASSERT_DOMAIN_SEG("this", 2);
+	dv = parse_Domain(value, strlen(value)); \
+	assert(dv.len = strlen(value)); \
+	assert(dv.segs_used == segments); \
+	assert(dv.segs_alloc >= segments)
+	ASSERT_PARSE("this.domain.com", 3);
+	ASSERT_DOMAIN_SEG("com", 0);
+	ASSERT_DOMAIN_SEG("domain", 1);
+	ASSERT_DOMAIN_SEG("this", 2);
 #undef ASSERT_PARSE
 
-    free_DomainView(&dv);
-    ADD_TCC;
+	free_DomainView(&dv);
+	ADD_TCC;
 }
 
 #define ASSERT_UPDATE(value, ret, segments) \
-    assert(ret == update_DomainView(&dv, value, strlen(value))); \
-    assert(dv.len == strlen(value)); \
-    assert(dv.segs_used == segments); \
-    assert(dv.segs_alloc >= segments)
+	assert(ret == update_DomainView(&dv, value, strlen(value))); \
+	assert(dv.len == strlen(value)); \
+	assert(dv.segs_used == segments); \
+	assert(dv.segs_alloc >= segments)
 
 static void test_DomainIter(DomainView_t *dv, size_len_t segments,
-        const char **values)
+		const char **values)
 {
-    DomainViewIter_t it, end;
-    SubdomainView_t sdv;
+	DomainViewIter_t it, end;
+	SubdomainView_t sdv;
 
-    it = begin_DomainView(dv);
+	it = begin_DomainView(dv);
 
-    assert(it.cur_seg == 0);
-    assert(it.dv = dv);
-
-#define ASSERT_NEXT(idx) \
-    assert(next_DomainView(&it, &sdv)); \
-    assert(!null_SubdomainView(&sdv)); \
-    assert(it.cur_seg == (idx + 1)); \
-    assert(sdv.len == strlen(values[idx])); \
-    assert(!memcmp(sdv.data, values[idx], strlen(values[idx])))
-    for(size_len_t i = 0; i < segments; i++)
-    {
-        ASSERT_NEXT(i);
-    }
-    assert(!next_DomainView(&it, &sdv));
-#undef ASSERT_NEXT
-
-    end = end_DomainView(dv);
-    assert(end.cur_seg == segments);
-    assert(end.dv = dv);
+	assert(it.cur_seg == 0);
+	assert(it.dv = dv);
 
 #define ASSERT_NEXT(idx) \
-    assert(prev_DomainView(&end, &sdv)); \
-    assert(!null_SubdomainView(&sdv)); \
-    assert(end.cur_seg == idx); \
-    assert(sdv.len == strlen(values[idx])); \
-    assert(!memcmp(sdv.data, values[idx], strlen(values[idx])))
-    for(int i = segments - 1; i >= 0; i--)
-    {
-        ASSERT_NEXT((size_len_t)i);
-    }
-    assert(!prev_DomainView(&end, &sdv));
+	assert(next_DomainView(&it, &sdv)); \
+	assert(!null_SubdomainView(&sdv)); \
+	assert(it.cur_seg == (idx + 1)); \
+	assert(sdv.len == strlen(values[idx])); \
+	assert(!memcmp(sdv.data, values[idx], strlen(values[idx])))
+	for(size_len_t i = 0; i < segments; i++)
+	{
+		ASSERT_NEXT(i);
+	}
+	assert(!next_DomainView(&it, &sdv));
 #undef ASSERT_NEXT
-    ADD_TCC;
+
+	end = end_DomainView(dv);
+	assert(end.cur_seg == segments);
+	assert(end.dv = dv);
+
+#define ASSERT_NEXT(idx) \
+	assert(prev_DomainView(&end, &sdv)); \
+	assert(!null_SubdomainView(&sdv)); \
+	assert(end.cur_seg == idx); \
+	assert(sdv.len == strlen(values[idx])); \
+	assert(!memcmp(sdv.data, values[idx], strlen(values[idx])))
+	for(int i = segments - 1; i >= 0; i--)
+	{
+		ASSERT_NEXT((size_len_t)i);
+	}
+	assert(!prev_DomainView(&end, &sdv));
+#undef ASSERT_NEXT
+	ADD_TCC;
 }
 
 static void test_update_Domain()
 {
-    DomainView_t dv;
-    SubdomainView_t sdv;
+	DomainView_t dv;
+	SubdomainView_t sdv;
 
-    init_DomainView(&dv);
+	init_DomainView(&dv);
 
-    ASSERT_UPDATE("this.domain.com", true, 3);
-    ASSERT_DOMAIN_SEG("com", 0);
-    ASSERT_DOMAIN_SEG("domain", 1);
-    ASSERT_DOMAIN_SEG("this", 2);
+	ASSERT_UPDATE("this.domain.com", true, 3);
+	ASSERT_DOMAIN_SEG("com", 0);
+	ASSERT_DOMAIN_SEG("domain", 1);
+	ASSERT_DOMAIN_SEG("this", 2);
 
-    const char* values1[] = {"com", "domain", "this"};
-    test_DomainIter(&dv, 3, values1);
+	const char* values1[] = {"com", "domain", "this"};
+	test_DomainIter(&dv, 3, values1);
 
-    ASSERT_UPDATE("four.segment.world.net", true, 4);
-    ASSERT_DOMAIN_SEG("net", 0);
-    ASSERT_DOMAIN_SEG("world", 1);
-    ASSERT_DOMAIN_SEG("segment", 2);
-    ASSERT_DOMAIN_SEG("four", 3);
+	ASSERT_UPDATE("four.segment.world.net", true, 4);
+	ASSERT_DOMAIN_SEG("net", 0);
+	ASSERT_DOMAIN_SEG("world", 1);
+	ASSERT_DOMAIN_SEG("segment", 2);
+	ASSERT_DOMAIN_SEG("four", 3);
 
-    const char* values2[] = {"net", "world", "segment", "four"};
-    test_DomainIter(&dv, 4, values2);
+	const char* values2[] = {"net", "world", "segment", "four"};
+	test_DomainIter(&dv, 4, values2);
 
-    ASSERT_UPDATE("very.long.subdomain.that.never.ends.around.world", true, 8);
-    ASSERT_DOMAIN_SEG("world", 0);
-    ASSERT_DOMAIN_SEG("around", 1);
-    ASSERT_DOMAIN_SEG("ends", 2);
-    ASSERT_DOMAIN_SEG("never", 3);
-    ASSERT_DOMAIN_SEG("that", 4);
-    ASSERT_DOMAIN_SEG("subdomain", 5);
-    ASSERT_DOMAIN_SEG("long", 6);
-    ASSERT_DOMAIN_SEG("very", 7);
+	ASSERT_UPDATE("very.long.subdomain.that.never.ends.around.world", true, 8);
+	ASSERT_DOMAIN_SEG("world", 0);
+	ASSERT_DOMAIN_SEG("around", 1);
+	ASSERT_DOMAIN_SEG("ends", 2);
+	ASSERT_DOMAIN_SEG("never", 3);
+	ASSERT_DOMAIN_SEG("that", 4);
+	ASSERT_DOMAIN_SEG("subdomain", 5);
+	ASSERT_DOMAIN_SEG("long", 6);
+	ASSERT_DOMAIN_SEG("very", 7);
 
 #define ASSERT_SUBDV(idx, value) \
-    assert(get_SubdomainView(&dv, idx, &sdv)); \
-    assert(!null_SubdomainView(&sdv)); \
-    assert(sdv.len == strlen(value)); \
-    assert(!memcmp(sdv.data, value, strlen(value)))
-    ASSERT_SUBDV(4, "that");
-    ASSERT_SUBDV(0, "world");
+	assert(get_SubdomainView(&dv, idx, &sdv)); \
+	assert(!null_SubdomainView(&sdv)); \
+	assert(sdv.len == strlen(value)); \
+	assert(!memcmp(sdv.data, value, strlen(value)))
+	ASSERT_SUBDV(4, "that");
+	ASSERT_SUBDV(0, "world");
 #undef ASSERT_SUBDV
 
-    free_DomainView(&dv);
-    ADD_TCC;
+	free_DomainView(&dv);
+	ADD_TCC;
 }
 #undef ASSERT_UPDATE
 
 static void test_nil_fqd()
 {
-    DomainView_t dv;
+	DomainView_t dv;
 
-    init_DomainView(&dv);
+	init_DomainView(&dv);
 
-    assert(!update_DomainView(&dv, "non-nil.mil", 0));
-    assert(!dv.fqd); 
-    assert(dv.len == 0);
-    assert(dv.label_indexes);
-    assert(dv.lengths);
-    assert(dv.segs_used == 0);
-    assert(dv.segs_alloc >= 1);
+	assert(!update_DomainView(&dv, "non-nil.mil", 0));
+	assert(!dv.fqd);
+	assert(dv.len == 0);
+	assert(dv.label_indexes);
+	assert(dv.lengths);
+	assert(dv.segs_used == 0);
+	assert(dv.segs_alloc >= 1);
 
-    assert(!update_DomainView(&dv, NULL, 10));
-    assert(!dv.fqd); 
-    assert(dv.len == 0);
-    assert(dv.label_indexes);
-    assert(dv.lengths);
-    assert(dv.segs_used == 0);
-    assert(dv.segs_alloc >= 1);
+	assert(!update_DomainView(&dv, NULL, 10));
+	assert(!dv.fqd);
+	assert(dv.len == 0);
+	assert(dv.label_indexes);
+	assert(dv.lengths);
+	assert(dv.segs_used == 0);
+	assert(dv.segs_alloc >= 1);
 
-    free_DomainView(&dv);
-    ADD_TCC;
+	free_DomainView(&dv);
+	ADD_TCC;
 }
 
 static void test_nil_DomainView()
 {
-    DomainView_t dv;
-    SubdomainView_t sdv;
-    memset(&dv, 0, sizeof(DomainView_t));
+	DomainView_t dv;
+	SubdomainView_t sdv;
+	memset(&dv, 0, sizeof(DomainView_t));
 
-    assert(!update_DomainView(&dv, "non-nil.zil", strlen("non-nil.zil")));
-    assert(!get_SubdomainView(NULL, 1, &sdv));
-    assert(!get_SubdomainView(&dv, 1, &sdv));
-    assert(!get_SubdomainView(&dv, 0, &sdv));
+	assert(!update_DomainView(&dv, "non-nil.zil", strlen("non-nil.zil")));
+	assert(!get_SubdomainView(NULL, 1, &sdv));
+	assert(!get_SubdomainView(&dv, 1, &sdv));
+	assert(!get_SubdomainView(&dv, 0, &sdv));
 
-    free_DomainView(&dv);
-    ADD_TCC;
+	free_DomainView(&dv);
+	ADD_TCC;
 }
 
 static void test_long_label()
 {
-    DomainView_t dv;
-    char *long_label;
+	DomainView_t dv;
+	char *long_label;
 
-    init_DomainView(&dv);
+	init_DomainView(&dv);
 
-    long_label = malloc(sizeof(char) * UCHAR_MAX);
+	long_label = malloc(sizeof(char) * UCHAR_MAX);
 
-    memset(long_label, 'a', UCHAR_MAX);
-    long_label[10] = '.';
-    long_label[20] = '.';
-    long_label[30] = '.';
-    long_label[50] = '.';
+	memset(long_label, 'a', UCHAR_MAX);
+	long_label[10] = '.';
+	long_label[20] = '.';
+	long_label[30] = '.';
+	long_label[50] = '.';
 
-    // the TLD is well more than MAX_DOMAIN_LABEL (63) BYTES
-    assert(update_DomainView(&dv, long_label, UCHAR_MAX));
+	// the TLD is well more than MAX_DOMAIN_LABEL (63) BYTES
+	assert(update_DomainView(&dv, long_label, UCHAR_MAX));
 
-    free_DomainView(&dv);
-    free(long_label);
-    ADD_TCC;
+	free_DomainView(&dv);
+	free(long_label);
+	ADD_TCC;
 }
 
 static void test_too_long()
 {
-    DomainView_t dv;
-    char *too_long;
+	DomainView_t dv;
+	char *too_long;
 
-    init_DomainView(&dv);
+	init_DomainView(&dv);
 
-    too_long = malloc(sizeof(char) * UCHAR_MAX * 2);
+	too_long = malloc(sizeof(char) * UCHAR_MAX * 2);
 
-    memset(too_long, 'a', UCHAR_MAX * 2);
-    too_long[10] = '.';
-    too_long[20] = '.';
-    too_long[30] = '.';
-    too_long[50] = '.';
+	memset(too_long, 'a', UCHAR_MAX * 2);
+	too_long[10] = '.';
+	too_long[20] = '.';
+	too_long[30] = '.';
+	too_long[50] = '.';
 
-    // the TLD is well beyond what can fit in an 'unsigned char'
-    assert(!update_DomainView(&dv, too_long, UCHAR_MAX * 2));
+	// the TLD is well beyond what can fit in an 'unsigned char'
+	assert(!update_DomainView(&dv, too_long, UCHAR_MAX * 2));
 
-    free_DomainView(&dv);
-    free(too_long);
-    ADD_TCC;
+	free_DomainView(&dv);
+	free(too_long);
+	ADD_TCC;
 }
 
 void info_domain()
 {
-    printf("Sizeof DomainView_t: %lu\n", sizeof(DomainView_t));
-    printf("Sizeof DomainViewIter_t: %lu\n", sizeof(DomainViewIter_t));
-    printf("Sizeof SubdomainView_t: %lu\n", sizeof(SubdomainView_t));
-    ADD_TCC;
+	printf("Sizeof DomainView_t: %lu\n", sizeof(DomainView_t));
+	printf("Sizeof DomainViewIter_t: %lu\n", sizeof(DomainViewIter_t));
+	printf("Sizeof SubdomainView_t: %lu\n", sizeof(SubdomainView_t));
+	ADD_TCC;
 }
 
 void test_domain()
 {
-    test_null_Domain();
-    test_free_Domain();
-    test_init_Domain();
-    test_parse_Domain();
-    test_update_Domain();
-    test_nil_fqd();
-    test_nil_DomainView();
-    test_long_label();
-    test_too_long();
-    ADD_TCC;
+	test_null_Domain();
+	test_free_Domain();
+	test_init_Domain();
+	test_parse_Domain();
+	test_update_Domain();
+	test_nil_fqd();
+	test_nil_DomainView();
+	test_long_label();
+	test_too_long();
+	ADD_TCC;
 }
 #endif

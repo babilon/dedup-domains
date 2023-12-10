@@ -36,13 +36,13 @@ static void do_test_end2end(const int argc, char *const *argv_i);
  */
 static void test_end2end()
 {
-    char *const argv_i[] = {"tests/unit_pfb_prune/E2ETestInput_1.txt",
-                            "tests/unit_pfb_prune/E2ETestInput_2.txt",
-                            "tests/unit_pfb_prune/E2ETestInput_3.txt"};
+	char *const argv_i[] = {"tests/unit_pfb_prune/E2ETestInput_1.txt",
+							"tests/unit_pfb_prune/E2ETestInput_2.txt",
+							"tests/unit_pfb_prune/E2ETestInput_3.txt"};
 
-    do_test_end2end(3, argv_i);
+	do_test_end2end(3, argv_i);
 
-    ADD_TCC;
+	ADD_TCC;
 }
 
 /**
@@ -50,12 +50,12 @@ static void test_end2end()
  */
 static void test_end2end_empty()
 {
-    char *const argv_i[] = {"tests/unit_pfb_prune/E2ETestInput_1.txt",
-                            "tests/unit_pfb_prune/E2ETest_Empty.txt"};
+	char *const argv_i[] = {"tests/unit_pfb_prune/E2ETestInput_1.txt",
+							"tests/unit_pfb_prune/E2ETest_Empty.txt"};
 
-    do_test_end2end(2, argv_i);
+	do_test_end2end(2, argv_i);
 
-    ADD_TCC;
+	ADD_TCC;
 }
 
 #ifndef REGEX_ENABLED
@@ -69,117 +69,117 @@ static void test_end2end_empty()
  */
 static void test_carry_over_end2end()
 {
-                            // exactly 10 lines in all
-    char *const argv_i[] = {"tests/unit_pfb_prune/E2ETestRegexInput_1.txt",
-                            // 8 non-regex, 3 regex: allocate one more
-                            "tests/unit_pfb_prune/E2ETestRegexInput_2.txt",
-                            // space remaining for more: 5 lines
-                            "tests/unit_pfb_prune/E2ETestRegexInput_3.txt",
-                            // empty file
-                            "tests/unit_pfb_prune/E2ETest_Empty.txt",
-                            // 10 regular, 1 regex
-                            "tests/unit_pfb_prune/E2ETestRegexInput_4.txt",
-                            // several
-                            "tests/unit_pfb_prune/E2ETestRegexInput_5.txt"
-    };
+							// exactly 10 lines in all
+	char *const argv_i[] = {"tests/unit_pfb_prune/E2ETestRegexInput_1.txt",
+							// 8 non-regex, 3 regex: allocate one more
+							"tests/unit_pfb_prune/E2ETestRegexInput_2.txt",
+							// space remaining for more: 5 lines
+							"tests/unit_pfb_prune/E2ETestRegexInput_3.txt",
+							// empty file
+							"tests/unit_pfb_prune/E2ETest_Empty.txt",
+							// 10 regular, 1 regex
+							"tests/unit_pfb_prune/E2ETestRegexInput_4.txt",
+							// several
+							"tests/unit_pfb_prune/E2ETestRegexInput_5.txt"
+	};
 
-    do_test_end2end(6, argv_i);
+	do_test_end2end(6, argv_i);
 
-    ADD_TCC;
+	ADD_TCC;
 }
 #endif
 
 static void do_test_end2end(const int argc, char *const *argv_i)
 {
-    bool use_shared_buffer = true;
+	bool use_shared_buffer = true;
 
-    const char *out_ext = ".fulle2e";
-    const size_t alloc_contexts = argc;
-    pfb_contexts_t contexts = pfb_init_contexts(alloc_contexts, out_ext, argv_i);
+	const char *out_ext = ".fulle2e";
+	const size_t alloc_contexts = argc;
+	pfb_contexts_t contexts = pfb_init_contexts(alloc_contexts, out_ext, argv_i);
 
-    assert(contexts.begin_context->dt);
-    assert(!contexts.begin_context->dt[0]);
+	assert(contexts.begin_context->dt);
+	assert(!contexts.begin_context->dt[0]);
 
-    for(pfb_context_t *c = contexts.begin_context; c != contexts.end_context; c++)
-    {
-        // every context references the same dt. only have to null the place holder
-        // for one of the contexts.
-        assert(c->dt == contexts.begin_context->dt);
-        assert(!c->dt[0]);
+	for(pfb_context_t *c = contexts.begin_context; c != contexts.end_context; c++)
+	{
+		// every context references the same dt. only have to null the place holder
+		// for one of the contexts.
+		assert(c->dt == contexts.begin_context->dt);
+		assert(!c->dt[0]);
 
-    }
+	}
 
-    // perhaps iterate over all input arguments create context for each one and
-    // open the files to verify all files can be read. and open output files to
-    // verify those can be written. then begin the work of things in a separate
-    // loop. maybe this consolidates clean up. can use hash or an index into an
-    // array.
-    assert(contexts.begin_context->dt);
-    assert(contexts.begin_context->dt[0] == NULL);
+	// perhaps iterate over all input arguments create context for each one and
+	// open the files to verify all files can be read. and open output files to
+	// verify those can be written. then begin the work of things in a separate
+	// loop. maybe this consolidates clean up. can use hash or an index into an
+	// array.
+	assert(contexts.begin_context->dt);
+	assert(contexts.begin_context->dt[0] == NULL);
 
-    pfb_read_csv(&contexts);
+	pfb_read_csv(&contexts);
 
-    // confirm that reading didn't bork a pointer
-    assert(contexts.begin_context->dt);
-    assert(contexts.begin_context->dt[0]);
+	// confirm that reading didn't bork a pointer
+	assert(contexts.begin_context->dt);
+	assert(contexts.begin_context->dt[0]);
 
-    for(pfb_context_t *c = contexts.begin_context; c != contexts.end_context; c++)
-    {
-        assert(c->dt == contexts.begin_context->dt);
-        assert(c->dt[0] == contexts.begin_context->dt[0]);
-    }
+	for(pfb_context_t *c = contexts.begin_context; c != contexts.end_context; c++)
+	{
+		assert(c->dt == contexts.begin_context->dt);
+		assert(c->dt[0] == contexts.begin_context->dt[0]);
+	}
 
-    ArrayDomainInfo_t array_di;
-    init_ArrayDomainInfo(&array_di, pfb_len_contexts(&contexts));
-    array_di.begin_pfb_context = contexts.begin_context;
+	ArrayDomainInfo_t array_di;
+	init_ArrayDomainInfo(&array_di, pfb_len_contexts(&contexts));
+	array_di.begin_pfb_context = contexts.begin_context;
 
-    for(int i = 0; i < argc; i++)
-    {
-        printf("alloc contextdomain=[%d]=%lu\n", i, (size_t)array_di.cd[i].alloc_linenumbers);
-    }
+	for(int i = 0; i < argc; i++)
+	{
+		printf("alloc contextdomain=[%d]=%lu\n", i, (size_t)array_di.cd[i].alloc_linenumbers);
+	}
 
 
-    pfb_consolidate(contexts.begin_context->dt, &array_di);
-    assert(contexts.begin_context->dt);
-    assert(!contexts.begin_context->dt[0]);
+	pfb_consolidate(contexts.begin_context->dt, &array_di);
+	assert(contexts.begin_context->dt);
+	assert(!contexts.begin_context->dt[0]);
 
-    pfb_write_csv(&contexts, &array_di, use_shared_buffer);
+	pfb_write_csv(&contexts, &array_di, use_shared_buffer);
 
-    pfb_free_contexts(&contexts);
-    free_ArrayDomainInfo(&array_di);
+	pfb_free_contexts(&contexts);
+	free_ArrayDomainInfo(&array_di);
 
-    assert(!contexts.begin_context);
-    assert(!contexts.end_context);
-    assert(!array_di.begin_pfb_context);
+	assert(!contexts.begin_context);
+	assert(!contexts.end_context);
+	assert(!array_di.begin_pfb_context);
 
-    ADD_TCC;
+	ADD_TCC;
 }
 
 void run_tests()
 {
-    printf("Running tests...");
-    test_csvline();
-    test_domain();
-    test_DomainTree();
-    test_rw_pfb_csv();
-    test_pfb_prune();
-    test_end2end();
-    test_end2end_empty();
-    test_input_args();
-    test_carry_over();
+	printf("Running tests...");
+	test_csvline();
+	test_domain();
+	test_DomainTree();
+	test_rw_pfb_csv();
+	test_pfb_prune();
+	test_end2end();
+	test_end2end_empty();
+	test_input_args();
+	test_carry_over();
 #ifndef REGEX_ENABLED
-    test_carry_over_end2end();
+	test_carry_over_end2end();
 #endif
-    printf("OK.\n");
+	printf("OK.\n");
 
-    printf("Printing info of structs...\n");
-    info_csvline();
-    info_domain();
-    info_DomainTree();
-    info_pfb_prune();
-    printf("OK.\n");
+	printf("Printing info of structs...\n");
+	info_csvline();
+	info_domain();
+	info_DomainTree();
+	info_pfb_prune();
+	printf("OK.\n");
 
-    // code coverage
-    print_lineshit();
+	// code coverage
+	print_lineshit();
 
 }

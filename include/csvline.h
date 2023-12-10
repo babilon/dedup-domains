@@ -24,13 +24,13 @@
 
 typedef struct CsvLineView
 {
-    char const **data;
-    size_len_t *lengths;
-    uchar cols_used;
-    uchar cols_alloc;
+	char const **data;
+	size_len_t *lengths;
+	uchar cols_used;
+	uchar cols_alloc;
 #ifdef COLLECT_DIAGNOSTICS
-    size_len_t count_reallocs;
-    size_len_t max_used;
+	size_len_t count_reallocs;
+	size_len_t max_used;
 #endif
 } CsvLineView_t;
 
@@ -40,9 +40,9 @@ typedef struct CsvLineView
  */
 typedef struct CsvColView
 {
-    char const *data;
-    size_len_t len;
-    size_len_t idx;
+	char const *data;
+	size_len_t len;
+	size_len_t idx;
 } CsvColView_t;
 
 extern bool update_CsvLineView(CsvLineView_t *lv, char const *input_line);

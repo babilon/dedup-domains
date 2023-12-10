@@ -4,7 +4,7 @@
 
 typedef struct carry_over
 {
-    linenumber_t *linenumbers;
+	linenumber_t *linenumbers;
 } carry_over_t;
 
 extern void insert_carry_over(carry_over_t *co, linenumber_t ln);

@@ -27,20 +27,20 @@ struct DomainView;
 
 typedef struct DomainInfo
 {
-    // Pointer to pfb_context_t for FILE read from and FILE to write to. Carried
-    // here to remember during consolidate and write which file to retrieve the
-    // line number from and file to write to.
-    void *context;
-    linenumber_t linenumber;
+	// Pointer to pfb_context_t for FILE read from and FILE to write to. Carried
+	// here to remember during consolidate and write which file to retrieve the
+	// line number from and file to write to.
+	void *context;
+	linenumber_t linenumber;
 
 #if defined(BUILD_TESTS) || defined(REGEX_ENABLED)
-    // useful/necessary for tests and debug.
-    // necessary for regex pruning
-    char *fqd;
+	// useful/necessary for tests and debug.
+	// necessary for regex pruning
+	char *fqd;
 #endif
-    size_len_t len; // number of characters in fqd
-    MatchStrength_t match_strength;
-    bool alive;
+	size_len_t len; // number of characters in fqd
+	MatchStrength_t match_strength;
+	bool alive;
 } DomainInfo_t;
 
 extern DomainInfo_t* convert_DomainInfo(struct DomainView *dv);

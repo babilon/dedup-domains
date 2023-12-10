@@ -37,55 +37,55 @@
  */
 typedef struct DomainView
 {
-    // indicates which file this line was read from.
-    void *context;
-    // line number in the input file the original line was read from
-    linenumber_t linenumber;
+	// indicates which file this line was read from.
+	void *context;
+	// line number in the input file the original line was read from
+	linenumber_t linenumber;
 
-    // input:
-    // blarg.ignored.www.google.com 0
-    // 2.blarg.ignored.www.google.com 0
-    // www.google.com 1
-    //     google.com 0
-    // www.google.com
-    //
-    // after a '1' match is encountered, the segs_alloc will never grow.
-    char const *fqd;
-    size_len_t len; // length of fqd
+	// input:
+	// blarg.ignored.www.google.com 0
+	// 2.blarg.ignored.www.google.com 0
+	// www.google.com 1
+	//	 google.com 0
+	// www.google.com
+	//
+	// after a '1' match is encountered, the segs_alloc will never grow.
+	char const *fqd;
+	size_len_t len; // length of fqd
 
-    // blarg.ignored. www. google. com 0
-    // 0     6       13   16      22
-    // 2.blarg.ignored. www. google. com 0
-    // 0 2     8       15   19      25
-    // www.google.com 1
-    // 0   3      9
-    //     google.com 0
-    // www.google.com
-    //
-    // this array is in reverse order like the 'labels' was designed so
-    // adding and removing is a matter of referencing segs_used.
-    // new entries are always 0
-    // removed entries can be ignored.
-    // decrement the entries remaining.
-    size_len_t* label_indexes;
-    uchar* lengths;
-    size_len_t segs_used;
-    size_len_t segs_alloc;
+	// blarg.ignored. www. google. com 0
+	// 0	 6	   13   16	  22
+	// 2.blarg.ignored. www. google. com 0
+	// 0 2	 8	   15   19	  25
+	// www.google.com 1
+	// 0   3	  9
+	//	 google.com 0
+	// www.google.com
+	//
+	// this array is in reverse order like the 'labels' was designed so
+	// adding and removing is a matter of referencing segs_used.
+	// new entries are always 0
+	// removed entries can be ignored.
+	// decrement the entries remaining.
+	size_len_t* label_indexes;
+	uchar* lengths;
+	size_len_t segs_used;
+	size_len_t segs_alloc;
 
-    // used to carry until the domain is inserted into the DomainTree.
-    enum MatchStrength match_strength;
+	// used to carry until the domain is inserted into the DomainTree.
+	enum MatchStrength match_strength;
 
 #ifdef COLLECT_DIAGNOSTICS
-    size_len_t count_realloc;
-    size_len_t max_used;
+	size_len_t count_realloc;
+	size_len_t max_used;
 #endif
 } DomainView_t;
 
 
 typedef struct DomainViewIter
 {
-    size_len_t cur_seg;
-    DomainView_t *dv;
+	size_len_t cur_seg;
+	DomainView_t *dv;
 } DomainViewIter_t;
 
 /**
@@ -94,10 +94,10 @@ typedef struct DomainViewIter
  */
 typedef struct SubdomainView
 {
-    // pointer into DomainView::fqd
-    char const *data;
-    // number of bytes in 'data' to read
-    uchar len;
+	// pointer into DomainView::fqd
+	char const *data;
+	// number of bytes in 'data' to read
+	uchar len;
 } SubdomainView_t;
 
 extern void init_DomainView(DomainView_t *dv);

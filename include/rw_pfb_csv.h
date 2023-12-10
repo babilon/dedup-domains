@@ -28,12 +28,12 @@ struct DomainInfo;
 
 typedef struct PortLineData
 {
-    // null terminated string
-    char const *data;
-    // length of the null terminated string to avoid strlen(x) calculations
-    size_t len;
-    // line number in the input file
-    linenumber_t linenumber;
+	// null terminated string
+	char const *data;
+	// length of the null terminated string to avoid strlen(x) calculations
+	size_t len;
+	// line number in the input file
+	linenumber_t linenumber;
 } PortLineData_t;
 
 /**
@@ -43,24 +43,24 @@ typedef struct PortLineData
  */
 typedef struct LineData
 {
-    char *buffer;
-    char *pos;
-    size_t len;
-    size_t alloc;
-    linenumber_t linenumber;
+	char *buffer;
+	char *pos;
+	size_t len;
+	size_t alloc;
+	linenumber_t linenumber;
 } LineData_t;
 
 typedef struct NextLineContext
 {
 #ifdef REGEX_ENABLED
-    struct DomainInfo **di;
-    struct DomainInfo **begin_array;
+	struct DomainInfo **di;
+	struct DomainInfo **begin_array;
 #else
-    linenumber_t *linenumbers;
-    linenumber_t *begin_array;
+	linenumber_t *linenumbers;
+	linenumber_t *begin_array;
 #endif
-    linenumber_t next_linenumber;
-    size_len_t len;
+	linenumber_t next_linenumber;
+	size_len_t len;
 } NextLineContext_t;
 
 extern size_t default_buffer_len();
@@ -72,13 +72,13 @@ struct ContextDomain;
 extern void init_NextLineContext(NextLineContext_t *nlc, struct ContextDomain *cd);
 
 extern void read_pfb_csv(struct pfb_context *,
-        void(*do_stuff)(PortLineData_t const *const plv, struct pfb_context *,
-            void *), void *context);
+		void(*do_stuff)(PortLineData_t const *const plv, struct pfb_context *,
+			void *), void *context);
 extern int read_pfb_line(struct pfb_context *, linenumber_t *nextline,
-        void *shared_buffer, size_t buffer_size,
-        void(*do_stuff)(PortLineData_t const *const plv, struct pfb_context *,
-            void *), void *context);
+		void *shared_buffer, size_t buffer_size,
+		void(*do_stuff)(PortLineData_t const *const plv, struct pfb_context *,
+			void *), void *context);
 extern void write_pfb_csv(PortLineData_t const *const pld, struct pfb_context *);
 extern void write_pfb_csv_callback(PortLineData_t const *const pld,
-        struct pfb_context *, void *);
+		struct pfb_context *, void *);
 #endif

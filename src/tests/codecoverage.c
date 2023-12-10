@@ -29,16 +29,16 @@ void print_lineshit() {}
 
 typedef struct ccline
 {
-    void *linenum;
-    const char *filename;
-    UT_hash_handle hh;
+	void *linenum;
+	const char *filename;
+	UT_hash_handle hh;
 } ccline_t;
 
 typedef struct ccfile
 {
-    void *filename;
-    ccline_t *lines;
-    UT_hash_handle hh;
+	void *filename;
+	ccline_t *lines;
+	UT_hash_handle hh;
 } ccfile_t;
 
 static ccfile_t *ccft = NULL;
@@ -46,79 +46,79 @@ static bool calledonce = false;
 
 void add_coverage(unsigned long linenum, const char *filename)
 {
-    ccfile_t *_ccf = NULL;
-    ccline_t *_ccl = NULL;
+	ccfile_t *_ccf = NULL;
+	ccline_t *_ccl = NULL;
 
-    if(calledonce && ccft == NULL)
-    {
-        assert(ccft);
-    }
+	if(calledonce && ccft == NULL)
+	{
+		assert(ccft);
+	}
 
-    calledonce = true;
+	calledonce = true;
 
-    void *fptr = (char*)filename;
-    HASH_FIND_PTR(ccft, &fptr, _ccf);
-    if(!_ccf)
-    {
-        _ccf = malloc(sizeof(ccfile_t));
-        _ccf->filename = (void*)filename;
-        _ccf->lines = NULL;
-        HASH_ADD_PTR(ccft, filename, _ccf);
-    }
+	void *fptr = (char*)filename;
+	HASH_FIND_PTR(ccft, &fptr, _ccf);
+	if(!_ccf)
+	{
+		_ccf = malloc(sizeof(ccfile_t));
+		_ccf->filename = (void*)filename;
+		_ccf->lines = NULL;
+		HASH_ADD_PTR(ccft, filename, _ccf);
+	}
 
-    HASH_FIND_PTR(ccft, &filename, _ccf);
-    assert(_ccf);
+	HASH_FIND_PTR(ccft, &filename, _ccf);
+	assert(_ccf);
 
-    void *lptr = (void*)(size_t)linenum;
-    HASH_FIND_PTR(_ccf->lines, &lptr, _ccl);
-    if(!_ccl)
-    {
-        _ccl = malloc(sizeof(ccline_t));
-        _ccl->linenum = (void*)(size_t)linenum;
-        _ccl->filename = filename;
-        HASH_ADD_PTR(_ccf->lines, linenum, _ccl);
-    }
+	void *lptr = (void*)(size_t)linenum;
+	HASH_FIND_PTR(_ccf->lines, &lptr, _ccl);
+	if(!_ccl)
+	{
+		_ccl = malloc(sizeof(ccline_t));
+		_ccl->linenum = (void*)(size_t)linenum;
+		_ccl->filename = filename;
+		HASH_ADD_PTR(_ccf->lines, linenum, _ccl);
+	}
 }
 
 int by_str(const ccfile_t *a, const ccfile_t *b)
 {
-    return strcmp(a->filename, b->filename);
+	return strcmp(a->filename, b->filename);
 }
 
 int by_linenum(const ccline_t *a, const ccline_t *b)
 {
-    return a->linenum - b->linenum;
+	return a->linenum - b->linenum;
 }
 
 void print_lineshit()
 {
-    ccfile_t *cur, *tmp;
-    ccline_t *curl, *tmpl;
-    FILE *f;
+	ccfile_t *cur, *tmp;
+	ccline_t *curl, *tmpl;
+	FILE *f;
 
-    // 'comm' requires sorted lines; use 'sort' command instead of sorting
-    // the hash table to control how lines are sorted.
-    //HASH_SORT(ccft, by_str);
+	// 'comm' requires sorted lines; use 'sort' command instead of sorting
+	// the hash table to control how lines are sorted.
+	//HASH_SORT(ccft, by_str);
 
-    f = fopen("lineshit.raw", "wb");
-    if(f)
-    {
-        HASH_ITER(hh, ccft, cur, tmp)
-        {
-            //HASH_SORT(cur->lines, by_linenum);
-            HASH_ITER(hh, cur->lines, curl, tmpl)
-            {
-                fprintf(f, "%s %lu\n", (char const*)curl->filename, (size_t)curl->linenum);
-                HASH_DEL(cur->lines, curl);
-                free(curl);
-            }
+	f = fopen("lineshit.raw", "wb");
+	if(f)
+	{
+		HASH_ITER(hh, ccft, cur, tmp)
+		{
+			//HASH_SORT(cur->lines, by_linenum);
+			HASH_ITER(hh, cur->lines, curl, tmpl)
+			{
+				fprintf(f, "%s %lu\n", (char const*)curl->filename, (size_t)curl->linenum);
+				HASH_DEL(cur->lines, curl);
+				free(curl);
+			}
 
-            HASH_DEL(ccft, cur);
-            free(cur);
-        }
-    }
+			HASH_DEL(ccft, cur);
+			free(cur);
+		}
+	}
 
-    fclose(f);
+	fclose(f);
 }
 
 #endif

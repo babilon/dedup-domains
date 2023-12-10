@@ -25,15 +25,15 @@
 
 typedef struct DomainTree
 {
-    // malloc'ed string for tld. not null terminated.
-    char *tld;
-    // domain segments are at most 63 bytes
-    uchar len;
+	// malloc'ed string for tld. not null terminated.
+	char *tld;
+	// domain segments are at most 63 bytes
+	uchar len;
 
-    struct DomainInfo *di;
-    struct DomainTree *child;
-    struct DomainTree *parent;
-    UT_hash_handle hh;
+	struct DomainInfo *di;
+	struct DomainTree *child;
+	struct DomainTree *parent;
+	UT_hash_handle hh;
 } DomainTree_t;
 
 struct DomainView;
@@ -42,14 +42,14 @@ extern DomainTree_t* insert_DomainTree(DomainTree_t **dt, struct DomainView *dv)
 extern void free_DomainTree(DomainTree_t **root);
 
 extern void transfer_DomainInfo(DomainTree_t **root,
-        void(*collector)(struct DomainInfo **di, void *context), void *context);
+		void(*collector)(struct DomainInfo **di, void *context), void *context);
 
 extern void visit_DomainTree(DomainTree_t *root,
-        void(*visitor_func)(struct DomainInfo const *di, void *context),
-        void *context);
+		void(*visitor_func)(struct DomainInfo const *di, void *context),
+		void *context);
 extern void print_DomainTree(DomainTree_t *root);
 
 #define DT_PARENT(dt) \
-    ((dt) == NULL ? NULL : (dt)->parent)
+	((dt) == NULL ? NULL : (dt)->parent)
 
 #endif

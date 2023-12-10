@@ -5,29 +5,29 @@
  */
 static linenumber_t alloc_carry_over(carry_over_t *co)
 {
-    ASSERT(co);
+	ASSERT(co);
 
-    // new length of the array
-    const linenumber_t count = len_carry_over(co) + 1;
+	// new length of the array
+	const linenumber_t count = len_carry_over(co) + 1;
 
-    // plus 1 to account for index 0 which holds the size/length of the array.
-    // this extra 1 is not included in the length of the array.
-    linenumber_t *tmp = realloc(co->linenumbers, sizeof(linenumber_t) * (count + 1));
+	// plus 1 to account for index 0 which holds the size/length of the array.
+	// this extra 1 is not included in the length of the array.
+	linenumber_t *tmp = realloc(co->linenumbers, sizeof(linenumber_t) * (count + 1));
 
-    if(tmp)
-    {
-        co->linenumbers = tmp;
-        co->linenumbers[0] = count;
-        ADD_CC;
-    }
-    else
-    {
-        ELOG_STDERR("ERROR: failed to realloc carry_over[]\n");
-        exit(EXIT_FAILURE);
-    }
+	if(tmp)
+	{
+		co->linenumbers = tmp;
+		co->linenumbers[0] = count;
+		ADD_CC;
+	}
+	else
+	{
+		ELOG_STDERR("ERROR: failed to realloc carry_over[]\n");
+		exit(EXIT_FAILURE);
+	}
 
-    ADD_CC;
-    return co->linenumbers[0];
+	ADD_CC;
+	return co->linenumbers[0];
 }
 
 /**
@@ -36,9 +36,9 @@ static linenumber_t alloc_carry_over(carry_over_t *co)
  */
 void init_carry_over(carry_over_t *co)
 {
-    ASSERT(co);
-    co->linenumbers = NULL;
-    ADD_CC;
+	ASSERT(co);
+	co->linenumbers = NULL;
+	ADD_CC;
 }
 
 /**
@@ -46,10 +46,10 @@ void init_carry_over(carry_over_t *co)
  */
 void free_carry_over(carry_over_t *co)
 {
-    ASSERT(co);
-    free(co->linenumbers);
-    co->linenumbers = NULL;
-    ADD_CC;
+	ASSERT(co);
+	free(co->linenumbers);
+	co->linenumbers = NULL;
+	ADD_CC;
 }
 
 /**
@@ -58,22 +58,22 @@ void free_carry_over(carry_over_t *co)
  */
 void transfer_linenumbers(linenumber_t *dest_linenumbers, carry_over_t *co)
 {
-    ASSERT(dest_linenumbers);
-    ASSERT(co);
-    linenumber_t count = len_carry_over(co);
+	ASSERT(dest_linenumbers);
+	ASSERT(co);
+	linenumber_t count = len_carry_over(co);
 
-    if(count == 0)
-    {
-        // gracefully handle a bogus request
-        ADD_CC;
-        return;
-    }
+	if(count == 0)
+	{
+		// gracefully handle a bogus request
+		ADD_CC;
+		return;
+	}
 
-    memmove(dest_linenumbers, co->linenumbers + 1,
-            sizeof(linenumber_t) * len_carry_over(co));
+	memmove(dest_linenumbers, co->linenumbers + 1,
+			sizeof(linenumber_t) * len_carry_over(co));
 
-    free_carry_over(co);
-    ADD_CC;
+	free_carry_over(co);
+	ADD_CC;
 }
 
 /**
@@ -82,15 +82,15 @@ void transfer_linenumbers(linenumber_t *dest_linenumbers, carry_over_t *co)
  */
 linenumber_t len_carry_over(carry_over_t *co)
 {
-    ASSERT(co);
-    if(co->linenumbers)
-    {
-        ADD_CC;
-        return co->linenumbers[0];
-    }
+	ASSERT(co);
+	if(co->linenumbers)
+	{
+		ADD_CC;
+		return co->linenumbers[0];
+	}
 
-    ADD_CC;
-    return 0;
+	ADD_CC;
+	return 0;
 }
 
 /**
@@ -100,120 +100,120 @@ linenumber_t len_carry_over(carry_over_t *co)
  */
 void insert_carry_over(carry_over_t *co, linenumber_t ln)
 {
-    ASSERT(co);
-    ASSERT(ln > 0);
+	ASSERT(co);
+	ASSERT(ln > 0);
 
-    const linenumber_t index = alloc_carry_over(co);
+	const linenumber_t index = alloc_carry_over(co);
 
-    // first element value is at [1]. the length/size of array is at [0].
-    ASSERT(index >= 1);
-    ASSERT(co->linenumbers);
-    ASSERT(index <= co->linenumbers[0]);
-    co->linenumbers[index] = ln;
-    ADD_CC;
+	// first element value is at [1]. the length/size of array is at [0].
+	ASSERT(index >= 1);
+	ASSERT(co->linenumbers);
+	ASSERT(index <= co->linenumbers[0]);
+	co->linenumbers[index] = ln;
+	ADD_CC;
 }
 
 #ifdef BUILD_TESTS
 static void test_init_carry_over()
 {
-    carry_over_t co, co_zero;
-    memset(&co, 0xf, sizeof(carry_over_t));
-    memset(&co_zero, 0, sizeof(carry_over_t));
+	carry_over_t co, co_zero;
+	memset(&co, 0xf, sizeof(carry_over_t));
+	memset(&co_zero, 0, sizeof(carry_over_t));
 
-    // legal to call free on a zero'd carry_over_t
-    free_carry_over(&co_zero);
+	// legal to call free on a zero'd carry_over_t
+	free_carry_over(&co_zero);
 
-    init_carry_over(&co);
+	init_carry_over(&co);
 
-    assert(0 == memcmp(&co, &co_zero, sizeof(carry_over_t)));
+	assert(0 == memcmp(&co, &co_zero, sizeof(carry_over_t)));
 
-    free_carry_over(&co);
+	free_carry_over(&co);
 
-    assert(0 == memcmp(&co, &co_zero, sizeof(carry_over_t)));
+	assert(0 == memcmp(&co, &co_zero, sizeof(carry_over_t)));
 
-    // legal to call free on a free'd carry_over_t
-    free_carry_over(&co);
+	// legal to call free on a free'd carry_over_t
+	free_carry_over(&co);
 
-    ADD_TCC;
+	ADD_TCC;
 }
 
 static void test_len_carry_over()
 {
-    carry_over_t co;
-    init_carry_over(&co);
-    assert(0 == len_carry_over(&co));
+	carry_over_t co;
+	init_carry_over(&co);
+	assert(0 == len_carry_over(&co));
 
-    insert_carry_over(&co, 33);
+	insert_carry_over(&co, 33);
 
-    assert(1 == len_carry_over(&co));
+	assert(1 == len_carry_over(&co));
 
-    free_carry_over(&co);
+	free_carry_over(&co);
 
-    assert(0 == len_carry_over(&co));
+	assert(0 == len_carry_over(&co));
 
-    ADD_TCC;
+	ADD_TCC;
 }
 
 static void test_insert_carry_over()
 {
-    carry_over_t co;
-    init_carry_over(&co);
+	carry_over_t co;
+	init_carry_over(&co);
 
-    insert_carry_over(&co, 3);
-    insert_carry_over(&co, 33);
-    insert_carry_over(&co, 2);
-    insert_carry_over(&co, 22);
+	insert_carry_over(&co, 3);
+	insert_carry_over(&co, 33);
+	insert_carry_over(&co, 2);
+	insert_carry_over(&co, 22);
 
-    assert(4 == len_carry_over(&co));
+	assert(4 == len_carry_over(&co));
 
-    assert(co.linenumbers[0] == 4);
-    assert(co.linenumbers[1] == 3);
-    assert(co.linenumbers[2] == 33);
-    assert(co.linenumbers[3] == 2);
-    assert(co.linenumbers[4] == 22);
+	assert(co.linenumbers[0] == 4);
+	assert(co.linenumbers[1] == 3);
+	assert(co.linenumbers[2] == 33);
+	assert(co.linenumbers[3] == 2);
+	assert(co.linenumbers[4] == 22);
 
-    free_carry_over(&co);
+	free_carry_over(&co);
 
-    assert(0 == len_carry_over(&co));
-    ADD_TCC;
+	assert(0 == len_carry_over(&co));
+	ADD_TCC;
 }
 
 void test_transfer()
 {
-    carry_over_t co;
-    init_carry_over(&co);
+	carry_over_t co;
+	init_carry_over(&co);
 
-    insert_carry_over(&co, 101);
-    insert_carry_over(&co, 202);
-    insert_carry_over(&co, 303);
-    insert_carry_over(&co, 404);
-    insert_carry_over(&co, 505);
+	insert_carry_over(&co, 101);
+	insert_carry_over(&co, 202);
+	insert_carry_over(&co, 303);
+	insert_carry_over(&co, 404);
+	insert_carry_over(&co, 505);
 
-    const linenumber_t count = len_carry_over(&co);
-    assert(count == 5);
-    linenumber_t *xfered = calloc(count, sizeof(linenumber_t));
-    transfer_linenumbers(xfered, &co);
+	const linenumber_t count = len_carry_over(&co);
+	assert(count == 5);
+	linenumber_t *xfered = calloc(count, sizeof(linenumber_t));
+	transfer_linenumbers(xfered, &co);
 
-    free_carry_over(&co);
+	free_carry_over(&co);
 
-    assert(len_carry_over(&co) == 0);
+	assert(len_carry_over(&co) == 0);
 
-    for(size_t i = 0; i < count; i++)
-    {
-        assert(xfered[i] == ((i + 1) * 101));
-    }
+	for(size_t i = 0; i < count; i++)
+	{
+		assert(xfered[i] == ((i + 1) * 101));
+	}
 
-    free(xfered);
-    ADD_TCC;
+	free(xfered);
+	ADD_TCC;
 }
 
 void test_carry_over()
 {
-    test_init_carry_over();
-    test_len_carry_over();
-    test_insert_carry_over();
-    test_transfer();
+	test_init_carry_over();
+	test_len_carry_over();
+	test_insert_carry_over();
+	test_transfer();
 
-    ADD_TCC;
+	ADD_TCC;
 }
 #endif
