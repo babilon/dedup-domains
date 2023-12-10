@@ -1,5 +1,5 @@
 /**
- * codecoverage.h
+ * contextdomain.h
  *
  * Part of pfb_dnsbl_prune
  *
@@ -18,20 +18,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef CODE_COVERAGE_H
-#define CODE_COVERAGE_H
+#ifndef CONTEXTDOMAIN_H
+#define CONTEXTDOMAIN_H
+#include "dedupdomains.h"
 
-#ifdef CODECOVERAGE
-extern void add_coverage(unsigned long, const char *filename);
-#define ADD_CC do { add_coverage(__LINE__, __FILE__); } while(0)
-#define ADD_TCC do { add_coverage(__LINE__, __FILE__); } while(0)
-#else
-#define ADD_CC do {} while(0)
-#define ADD_TCC do {} while(0)
+typedef struct ContextDomain
+{
+	// regex trimming will be done after consolidation and during the final
+	// write.  the full domain is necessary to check against regex. regexes may
+	// be found after reading some or all of the files.
+
+	// only need the line numbers when writing to final output.
+	linenumber_t *linenumbers;
+	size_len_t next_idx; // length and the next spot to insert.
+	size_len_t alloc_linenumbers; // total space allocated/available
+
+#ifdef COLLECT_DIAGNOSTICS
+	size_len_t count_realloc_linenumbers;
 #endif
-
-#define ADD_CC_SINGLE ADD_CC
-
-extern void print_lineshit();
+} ContextDomain_t;
 
 #endif

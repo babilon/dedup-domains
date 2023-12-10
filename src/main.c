@@ -23,6 +23,8 @@
 #include "domain.h"
 #include "uthash.h"
 #include "domaintree.h"
+#include "arraydomaininfo.h"
+#include "pfb_context.h"
 #include "rw_pfb_csv.h"
 #include "pfb_prune.h"
 #include "inputargs.h"

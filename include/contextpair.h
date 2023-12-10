@@ -1,5 +1,5 @@
 /**
- * codecoverage.h
+ * contextpair.h
  *
  * Part of pfb_dnsbl_prune
  *
@@ -18,20 +18,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef CODE_COVERAGE_H
-#define CODE_COVERAGE_H
+#ifndef CONTEXTPAIR_H
+#define CONTEXTPAIR_H
+typedef struct ContextPair
+{
+	union {
+	void *c1;
+	void *lv;
+	};
 
-#ifdef CODECOVERAGE
-extern void add_coverage(unsigned long, const char *filename);
-#define ADD_CC do { add_coverage(__LINE__, __FILE__); } while(0)
-#define ADD_TCC do { add_coverage(__LINE__, __FILE__); } while(0)
-#else
-#define ADD_CC do {} while(0)
-#define ADD_TCC do {} while(0)
-#endif
-
-#define ADD_CC_SINGLE ADD_CC
-
-extern void print_lineshit();
-
+	union {
+	void *c2;
+	/**
+	 * Transitional payload during pfb_insert(). Carries CsvLineView data
+	 * through insert_DomainTree() for insertion (if unique) into the
+	 * DomainTree. Initialized once. Free'ed in pfb_close_context().
+	 */
+	void *dv;
+	void *nlc;
+	};
+} ContextPair_t;
 #endif

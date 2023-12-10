@@ -20,10 +20,9 @@
  */
 #include "dedupdomains.h"
 #include "rw_pfb_csv.h"
+#include "contextdomain.h"
+#include "pfb_context.h"
 #include "pfb_prune.h"
-#ifdef REGEX_ENABLED
-#include "domaininfo.h"
-#endif
 
 // 4096 is *probably* a safe sane reasonable default.
 static const size_t READ_BUFFER_SIZE = 4096;
@@ -449,20 +448,10 @@ void init_NextLineContext(NextLineContext_t *nlc, ContextDomain_t *cd)
 {
 	memset(nlc, 0, sizeof(NextLineContext_t));
 
-#ifdef REGEX_ENABLED
-	// if using regex, this will use the DomainInfo for linenumbers as the
-	// fqd is also around and kept in the struct and linenumbers is omitted
-	// from the ArrayDomainInfo.
-	nlc->di = cd->di;
-	nlc->begin_array = nlc->di;
-	nlc->len = cd->next_idx;
-	nlc->next_linenumber = nlc->len ? nlc->di[0]->linenumber : 0;
-#else
 	nlc->linenumbers = cd->linenumbers;
 	nlc->begin_array = nlc->linenumbers;
 	nlc->len = cd->next_idx;
 	nlc->next_linenumber = nlc->len ? nlc->linenumbers[0] : 0;
-#endif
 }
 
 void write_pfb_csv_callback(PortLineData_t const *const pld, pfb_context_t *pfbc, void *context)
@@ -479,19 +468,6 @@ void write_pfb_csv_callback(PortLineData_t const *const pld, pfb_context_t *pfbc
 
 	ASSERT(nlc->begin_array);
 	ASSERT(nlc->len);
-#ifdef REGEX_ENABLED
-	ASSERT(nlc->di != nlc->begin_array + nlc->len);
-	ASSERT((*nlc->di)->linenumber != 0);
-	nlc->di++;
-	if(nlc->di == nlc->begin_array + nlc->len)
-	{
-		nlc->next_linenumber = 0;
-	}
-	else
-	{
-		nlc->next_linenumber = (*nlc->di)->linenumber;
-	}
-#else
 	ASSERT(nlc->linenumbers != nlc->begin_array + nlc->len);
 	// previous line number was not zero
 	ASSERT(nlc->linenumbers[0] != 0);
@@ -513,7 +489,6 @@ void write_pfb_csv_callback(PortLineData_t const *const pld, pfb_context_t *pfbc
 		nlc->next_linenumber = *nlc->linenumbers;
 		ADD_CC;
 	}
-#endif
 
 	ADD_CC;
 }

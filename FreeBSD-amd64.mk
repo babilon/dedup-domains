@@ -5,7 +5,6 @@ SRCDIR := src
 OBJDIR := obj
 BINDIR := bin
 DIRMAIN := $(OBJDIR)/main
-DIRREGEX := $(OBJDIR)/regex
 DIRREL := $(OBJDIR)/release
 DIRTEST := $(OBJDIR)/test
 DIRCODECOV := $(OBJDIR)/codecov
@@ -22,7 +21,6 @@ DEBUGFLAG := -g3
 TESTFLAGS := $(DEBUGFLAG) -DBUILD_TESTS $(SIZE_T) $(MEMSET)
 CODECOVFLAGS := $(DEBUGFLAG) $(TESTFLAGS) $(CODECOV)
 MAINFLAGS := $(DEBUGFLAG) $(DIAGNO)
-REGEXFLAGS := $(DEBUGFLAG) $(DIAGNO) -DREGEX_ENABLED
 RELFLAGS := -O3 -DRELEASE_LOGGING -DCOLLECT_DIAGNOSTICS -DNDEBUG
 
 CFLAGS := -std=c17 -Wall -Wextra -Werror
@@ -36,7 +34,6 @@ include src/Submakefile src/tests/Submakefile
 
 OBJREL := $(patsubst %.c,$(DIRREL)/%.o,$(SRC))
 OBJMAIN := $(patsubst %.c,$(DIRMAIN)/%.o,$(SRC))
-OBJREGEX := $(patsubst %.c,$(DIRREGEX)/%.o,$(SRC))
 OBJTEST := $(patsubst %.c,$(DIRTEST)/%.o,$(SRCTEST))
 OBJCODECOV := $(patsubst %.c,$(DIRCODECOV)/%.o,$(SRCTEST))
 VERSIONNOGIT := $(patsubst %.h,generated/%.nogit.h,$(VERSIONDOTH))
@@ -48,11 +45,6 @@ $(DIRMAIN)/%.o: %.c
 	@mkdir -p $(dir $@)
 	@echo Using $(CC) to compile $< for main debug..
 	@$(CC) -c $(INCLUDE) -o $@ $< $(CFLAGS) $(MAINFLAGS)
-
-$(DIRREGEX)/%.o: %.c
-	@mkdir -p $(dir $@)
-	@echo Using $(CC) to compile $< for regex debug..
-	@$(CC) -c $(INCLUDE) -o $@ $< $(CFLAGS) $(REGEXFLAGS)
 
 $(DIRTEST)/%.o: %.c
 	@echo $@
@@ -71,18 +63,12 @@ $(DIRREL)/%.o: %.c
 	@$(CC) -c $(INCLUDE) -o $@ $< $(CFLAGS) $(RELFLAGS)
 
 .PHONY: all
-all: main regex release test codecoverage
+all: main release test codecoverage
 
 main: $(VERSIONNOGIT) $(OBJMAIN)
 	@echo Linking $@
 	@mkdir -p ${BINDIR}
 	@$(CC) $(LFLAGS) $(OBJMAIN) -o ./${BINDIR}/$@.real
-
-regex: $(VERSIONNOGIT) $(OBJREGEX)
-	@echo Linking $@
-	@mkdir -p ${BINDIR}
-	@$(CC) $(LFLAGS) $(OBJREGEX) -o ./${BINDIR}/$@.real
-	@echo "NOTICE: regex pruning is not implemented yet."
 
 release: $(VERSIONNOGIT) $(OBJREL)
 	@echo Linking $@

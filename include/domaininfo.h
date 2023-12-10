@@ -33,7 +33,7 @@ typedef struct DomainInfo
 	void *context;
 	linenumber_t linenumber;
 
-#if defined(BUILD_TESTS) || defined(REGEX_ENABLED)
+#if defined(BUILD_TESTS)
 	// useful/necessary for tests and debug.
 	// necessary for regex pruning
 	char *fqd;

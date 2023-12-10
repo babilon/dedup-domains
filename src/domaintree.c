@@ -52,7 +52,7 @@ void free_DomainInfo(DomainInfo_t **di)
 {
 	if(*di)
 	{
-#if defined(BUILD_TESTS) || defined(REGEX_ENABLED)
+#if defined(BUILD_TESTS)
 		free((*di)->fqd);
 #endif
 		ADD_CC;
@@ -72,7 +72,7 @@ DomainInfo_t *convert_DomainInfo(DomainView_t *dv)
 {
 	DomainInfo_t *di = init_DomainInfo();
 
-#if defined(BUILD_TESTS) || defined(REGEX_ENABLED)
+#if defined(BUILD_TESTS)
 	// fqd is necessary for tests where it is used to verify behaviors
 	// fqd is necessary for regex prune
 	di->fqd = malloc(sizeof(char) * dv->len);

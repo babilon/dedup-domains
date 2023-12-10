@@ -22,10 +22,6 @@
 #define RW_PFB_CSV_H
 #include "dedupdomains.h"
 
-#ifdef REGEX_ENABLED
-struct DomainInfo;
-#endif
-
 typedef struct PortLineData
 {
 	// null terminated string
@@ -52,13 +48,8 @@ typedef struct LineData
 
 typedef struct NextLineContext
 {
-#ifdef REGEX_ENABLED
-	struct DomainInfo **di;
-	struct DomainInfo **begin_array;
-#else
 	linenumber_t *linenumbers;
 	linenumber_t *begin_array;
-#endif
 	linenumber_t next_linenumber;
 	size_len_t len;
 } NextLineContext_t;

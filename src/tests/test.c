@@ -24,6 +24,9 @@
 #include "domain.h"
 #include "uthash.h"
 #include "domaintree.h"
+#include "arraydomaininfo.h"
+#include "contextdomain.h"
+#include "pfb_context.h"
 #include "rw_pfb_csv.h"
 #include "pfb_prune.h"
 #include "test.h"
@@ -58,7 +61,6 @@ static void test_end2end_empty()
 	ADD_TCC;
 }
 
-#ifndef REGEX_ENABLED
 /**
  * Files with varying amount of lines with regexes.
  *
@@ -87,7 +89,6 @@ static void test_carry_over_end2end()
 
 	ADD_TCC;
 }
-#endif
 
 static void do_test_end2end(const int argc, char *const *argv_i)
 {
@@ -167,9 +168,7 @@ void run_tests()
 	test_end2end_empty();
 	test_input_args();
 	test_carry_over();
-#ifndef REGEX_ENABLED
 	test_carry_over_end2end();
-#endif
 	printf("OK.\n");
 
 	printf("Printing info of structs...\n");

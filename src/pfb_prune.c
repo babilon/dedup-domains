@@ -21,10 +21,15 @@
 #include "dedupdomains.h"
 #include "domaintree.h"
 #include "domaininfo.h"
+#include "arraydomaininfo.h"
+#include "pfb_context.h"
+#include "contextdomain.h"
 #include "domain.h"
 #include "csvline.h"
 #include "rw_pfb_csv.h"
+#include "contextpair.h"
 #include "pfb_prune.h"
+#include "matchstrength.h"
 #include <limits.h>
 
 static size_t INITIAL_ARRAY_DOMAIN_INFO = 100000;
@@ -60,7 +65,7 @@ void set_realloc_DomainInfo_size(int v)
 size_t collected_domains_counter = 0;
 #endif
 
-static char* pfb_strdup(const char *in)
+char* pfb_strdup(const char *in, size_len_t in_size)
 {
 	if(!in)
 	{
@@ -68,7 +73,6 @@ static char* pfb_strdup(const char *in)
 		return NULL;
 	}
 
-	size_t in_size = strlen(in);
 	if(!in_size)
 	{
 		ELOG_STDERR("Input string must be non-empty\n");
@@ -135,36 +139,9 @@ char* outputfilename(const char *input, const char *ext)
 	return output;
 }
 
-void pfb_insert(PortLineData_t const *const pld, pfb_context_t *pfbc, void *context)
+static MatchStrength_t get_csvline_match(CsvLineView_t *lv)
 {
-	ASSERT(pld);
-	ASSERT(pfbc);
-	ASSERT(pfbc->in_file);
-	ASSERT(pfbc->out_file);
-	ASSERT(pfbc->dt);
-	ASSERT(context);
-
-	CsvLineView_t *lv = context;
-
-	update_CsvLineView(lv, pld->data);
-
-	const CsvColView_t cv_1 = get_CsvColView(lv, 1);
-
-	if(null_DomainView(&pfbc->dv))
-	{
-		init_DomainView(&pfbc->dv);
-		ADD_CC;
-	}
-
-	if(!update_DomainView(&pfbc->dv, cv_1.data, cv_1.len))
-	{
-		ELOG_STDERR("ERROR: failed to update DomainView; possibly garbage input. insert skipped.\n");
-		return;
-	}
-
-	// DomainView is valid only during an insert.
-	pfbc->dv.context = pfbc;
-	pfbc->dv.linenumber = pld->linenumber;
+	ASSERT(lv);
 
 	if(lv->cols_used >= 7)
 	{
@@ -183,38 +160,68 @@ void pfb_insert(PortLineData_t const *const pld, pfb_context_t *pfbc, void *cont
 			ELOG_STDERR("WARNING: line has bogus unsupported value in column 7: %.*s\n",
 					(int)cv_6.len, cv_6.data);
 			// flag line bogus to skip further processing
-			pfbc->dv.match_strength = MATCH_BOGUS;
 			ADD_CC;
+			return MATCH_BOGUS;
 		}
 		else
 		{
-			pfbc->dv.match_strength = cv_6.data[0] - '0';
 			ADD_CC;
+			return cv_6.data[0] - '0';
 		}
 	}
 	else
 	{
-		pfbc->dv.match_strength = MATCH_WEAK;
 		ADD_CC;
+		return MATCH_WEAK;
 	}
+}
 
-	if(pfbc->dv.match_strength == MATCH_REGEX)
+static void pfb_insert(PortLineData_t const *const pld, pfb_context_t *pfbc,
+		void *context)
+{
+	ASSERT(pld);
+	ASSERT(pfbc);
+	ASSERT(pfbc->in_file);
+	ASSERT(pfbc->out_file);
+	ASSERT(pfbc->dt);
+	ASSERT(context);
+
+	ContextPair_t *pc = context;
+	CsvLineView_t *lv = pc->lv;
+	DomainView_t *dv = pc->dv;
+
+	ASSERT(lv);
+	ASSERT(dv);
+
+	update_CsvLineView(lv, pld->data);
+
+	const CsvColView_t cv_1 = get_CsvColView(lv, 1);
+
+	const MatchStrength_t ms = get_csvline_match(lv);
+	if(ms == MATCH_REGEX)
 	{
-#ifdef REGEX_ENABLED
-		// write to the output file for this input file and skip insertion. it
-		// is a regex that does not get pruned.
-		write_pfb_csv(pld, pfbc);
-#else
 		// add the line information to list for direct carry over to the final
 		// list.
 		insert_carry_over(&pfbc->co, pld->linenumber);
-#endif
 		ADD_CC;
 	}
 	else
 	{
-		insert_DomainTree(pfbc->dt, &pfbc->dv);
-		ADD_CC;
+		ASSERT(!null_DomainView(dv));
+		if(!update_DomainView(dv, cv_1.data, cv_1.len))
+		{
+			ELOG_STDERR("ERROR: failed to update DomainView; possibly garbage input. insert skipped.\n");
+		}
+		else
+		{
+			// DomainView is valid only during an insert.
+			dv->match_strength = ms;
+			dv->context = pfbc;
+			dv->linenumber = pld->linenumber;
+
+			insert_DomainTree(pfbc->dt, dv);
+			ADD_CC;
+		}
 	}
 	ADD_CC;
 }
@@ -254,15 +261,16 @@ pfb_contexts_t pfb_init_contexts(size_t alloc_contexts, const char *out_ext,
 	// every context references the same dt. only have to null the place holder
 	// for one of the contexts.
 	ASSERT(cs.begin_context->dt[0] == NULL);
+
 	cs.end_context = cs.begin_context + alloc_contexts;
 
 	for(pfb_context_t *c = cs.begin_context; c != cs.end_context; c++, argv++)
 	{
 		ASSERT(!c->in_file);
 		ASSERT(!c->out_file);
-		ASSERT(null_DomainView(&c->dv));
 		c->dt = cs.begin_context->dt;
-		c->in_fname = pfb_strdup(*argv);
+		ASSERT(*argv);
+		c->in_fname = pfb_strdup(*argv, strlen(*argv));
 		c->out_fname = outputfilename(c->in_fname, out_ext);
 		init_carry_over(&c->co);
 		ADD_CC;
@@ -347,7 +355,7 @@ void pfb_close_context(pfb_context_t *c)
 		ADD_CC;
 	}
 
-	free_DomainView(&c->dv);
+	//free_DomainView(&c->dv);
 
 	ADD_CC;
 }
@@ -383,7 +391,6 @@ void pfb_free_contexts(pfb_contexts_t *cs)
 			pfb_close_context(c);
 			free(c->in_fname);
 			free(c->out_fname);
-			free_DomainView(&c->dv);
 			free_carry_over(&c->co);
 			ADD_CC;
 		}
@@ -412,17 +419,25 @@ void pfb_read_csv(pfb_contexts_t *cs)
 	// multiple threads.
 	init_CsvLineView(&lv);
 
+	DomainView_t dv;
+	init_DomainView(&dv);
+
+	ContextPair_t pc;
+	pc.lv = &lv;
+	pc.dv = &dv;
+
 	for(pfb_context_t *c = cs->begin_context; c < cs->end_context; c++)
 	{
 		printf("Reading %s...\n", c->in_fname);
 		// output file may not exist; if it does, this will ovewrite it.
 		pfb_open_context(c, false);
-		read_pfb_csv(c, pfb_insert, &lv);
+		read_pfb_csv(c, pfb_insert, &pc);
 		pfb_close_context(c);
 		ADD_CC;
 	}
 
 	free_CsvLineView(&lv);
+	free_DomainView(&dv);
 
 	ADD_CC;
 }
@@ -471,19 +486,11 @@ void init_ArrayDomainInfo(ArrayDomainInfo_t *array_di, const size_t alloc_contex
 
 	for(size_t i = 0; i < alloc_contexts; i++)
 	{
-#ifdef REGEX_ENABLED
-		array_di->cd[i].di = malloc(sizeof(DomainInfo_t*) * INITIAL_ARRAY_DOMAIN_INFO);
-		if(!array_di->cd[i].di)
-		{
-			exit(EXIT_FAILURE);
-		}
-#else
 		array_di->cd[i].linenumbers = malloc(sizeof(linenumber_t) * INITIAL_ARRAY_DOMAIN_INFO);
 		if(!array_di->cd[i].linenumbers)
 		{
 			exit(EXIT_FAILURE);
 		}
-#endif
 
 		array_di->cd[i].next_idx = 0;
 		array_di->cd[i].alloc_linenumbers = INITIAL_ARRAY_DOMAIN_INFO;
@@ -502,15 +509,7 @@ void free_ArrayDomainInfo(ArrayDomainInfo_t *array_di)
 	for(size_t i = 0; i < array_di->len_cd; i++)
 	{
 		ASSERT(array_di->cd);
-#ifdef REGEX_ENABLED
-		for(size_t l = 0; l < array_di->cd[i].next_idx; l++)
-		{
-			free_DomainInfo(&(array_di->cd[i].di[l]));
-		}
-		free(array_di->cd[i].di);
-#else
 		free(array_di->cd[i].linenumbers);
-#endif
 #ifdef COLLECT_DIAGNOSTICS
 		LOG_DIAG("ContextDomain's 'linenumbers'", &(array_di->cd[i]),
 				"realloc'ed %u times to final size of %u with %u used.\n",
@@ -543,21 +542,6 @@ static void resize_ContextLinenumbers(ContextDomain_t *cd, size_t count)
 #ifdef COLLECT_DIAGNOSTICS
 	cd->count_realloc_linenumbers++;
 #endif
-#ifdef REGEX_ENABLED
-	DomainInfo_t **tmp_di = realloc(cd->di, sizeof(DomainInfo_t *) * cd->alloc_linenumbers);
-	if(tmp_di)
-	{
-		cd->di = tmp_di;
-		ADD_CC_REGEX;
-	}
-	else
-	{
-		free(cd->di);
-		cd->di = NULL;
-		ELOG_STDERR("ERROR: failed to realloc DomainInfo_t* array\n");
-		exit(EXIT_FAILURE);
-	}
-#else
 	linenumber_t *tmp = realloc(cd->linenumbers, sizeof(linenumber_t) * cd->alloc_linenumbers);
 	if(tmp)
 	{
@@ -572,14 +556,9 @@ static void resize_ContextLinenumbers(ContextDomain_t *cd, size_t count)
 		ELOG_STDERR("ERROR: failed to realloc linenumbers array\n");
 		exit(EXIT_FAILURE);
 	}
-#endif
 	ADD_CC;
 }
 
-#ifndef REGEX_ENABLED
-/**
- * For non-regex builds only.
- */
 static void transfer_carry_over(ContextDomain_t *cd, pfb_context_t *pfbc)
 {
 	ASSERT(cd);
@@ -598,7 +577,6 @@ static void transfer_carry_over(ContextDomain_t *cd, pfb_context_t *pfbc)
 
 	ADD_CC;
 }
-#endif
 
 /**
  * Move DomainInfo's to the FILE context specific array.
@@ -635,13 +613,8 @@ static void collect_DomainInfo(DomainInfo_t **di, void *context)
 	// add the DomainInfo to the flat array referenced by context.
 	ASSERT(cd->next_idx < cd->alloc_linenumbers);
 	ASSERT((*di)->linenumber != 0);
-#ifdef REGEX_ENABLED
-	cd->di[cd->next_idx++] = *di;
-	*di = NULL;
-#else
 	cd->linenumbers[cd->next_idx++] = (*di)->linenumber;
 	free_DomainInfo(di);
-#endif
 
 #ifdef COLLECT_DIAGNOSTICS
 	collected_domains_counter++;
@@ -651,18 +624,6 @@ static void collect_DomainInfo(DomainInfo_t **di, void *context)
 	ADD_CC;
 }
 
-#ifdef REGEX_ENABLED
-int sort_DomainInfo(void const *a, void const *b)
-{
-	DomainInfo_t const *a_di = *(DomainInfo_t**)a;
-	DomainInfo_t const *b_di = *(DomainInfo_t**)b;
-	ADD_CC_REGEX;
-	// no line numbers in the 'used' section should be zero
-	ASSERT(a_di->linenumber != 0);
-	ASSERT(b_di->linenumber != 0);
-	return a_di->linenumber - b_di->linenumber;
-}
-#else
 int sort_LineNumbers(void const *a, void const *b)
 {
 	ADD_CC_SINGLE;
@@ -671,7 +632,6 @@ int sort_LineNumbers(void const *a, void const *b)
 	ASSERT(*(linenumber_t*)b != 0);
 	return *(linenumber_t*)a - *(linenumber_t*)b;
 }
-#endif
 
 /**
  * Move all DomainInfo into a flat array of DomainInfo. Sort the DomainInfo
@@ -685,11 +645,7 @@ void pfb_consolidate(DomainTree_t **root_dt, ArrayDomainInfo_t *array_di)
 	ASSERT(array_di->cd);
 	for(size_t i = 0; i < array_di->len_cd; i++)
 	{
-#ifdef REGEX_ENABLED
-		ASSERT(array_di->cd->di);
-#else
 		ASSERT(array_di->cd->linenumbers);
-#endif
 	}
 
 	// 1. consolidate DomainInfo into a flat array
@@ -714,7 +670,6 @@ void pfb_consolidate(DomainTree_t **root_dt, ArrayDomainInfo_t *array_di)
 	// tree is free'd
 	ASSERT(!*root_dt);
 
-#ifndef REGEX_ENABLED
 	for(size_t i = 0; i < array_di->len_cd; i++)
 	{
 		// transfer into 'linenumbers' from array_di->begin_pfb_context + i
@@ -722,24 +677,10 @@ void pfb_consolidate(DomainTree_t **root_dt, ArrayDomainInfo_t *array_di)
 		// void *destination, void *source, size_t num
 		transfer_carry_over(&array_di->cd[i], &array_di->begin_pfb_context[i]);
 	}
-#endif
 
 	// this could be done on separate threads.
 	for(size_t i = 0; i < array_di->len_cd; i++)
 	{
-#ifdef REGEX_ENABLED
-#ifdef DEBUG
-		DEBUG_PRINTF("sorting. before sort the line numbers in order are:\n");
-		for(size_t l = 0; l < array_di->cd[i].next_idx; l++)
-		{
-			ASSERT(array_di->cd[i].di[i]->linenumber > 0);
-			DEBUG_PRINTF("\t%d\n", array_di->cd[i].di[l]->linenumber);
-		}
-#endif
-		ASSERT(i < array_di->len_cd);
-		qsort(array_di->cd[i].di, array_di->cd[i].next_idx,
-				sizeof(DomainInfo_t*), sort_DomainInfo);
-#else
 #ifdef DEBUG
 		DEBUG_PRINTF("sorting. before sort the line numbers in order are:\n");
 		for(size_t l = 0; l < array_di->cd[i].next_idx; l++)
@@ -757,7 +698,6 @@ void pfb_consolidate(DomainTree_t **root_dt, ArrayDomainInfo_t *array_di)
 		{
 			DEBUG_PRINTF("\t%d\n", array_di->cd[i].linenumbers[l]);
 		}
-#endif
 #endif
 		ADD_CC;
 	}
@@ -786,7 +726,6 @@ void pfb_write_csv(pfb_contexts_t *cs, ArrayDomainInfo_t *array_di,
 
 	void *shared_buffer = NULL;
 
-#ifndef MULTI_THREADS
 	// optionally use a shared buffer or not. not available for multi-threaded
 	// runs. used by the read function. multi-thread can use a shared buffer for
 	// each thread.
@@ -795,7 +734,12 @@ void pfb_write_csv(pfb_contexts_t *cs, ArrayDomainInfo_t *array_di,
 		shared_buffer = malloc(sizeof(char) * default_buffer_len());
 		ADD_CC;
 	}
-#endif
+
+	CsvLineView_t lv;
+	// if this is multi-threaded, will need one lv per thread and break the loop
+	// apart for each thread. then find a way to insert into hash table across
+	// multiple threads.
+	init_CsvLineView(&lv);
 
 	for(pfb_context_t *c = cs->begin_context; c != cs->end_context; c++)
 	{
@@ -821,20 +765,6 @@ void pfb_write_csv(pfb_contexts_t *cs, ArrayDomainInfo_t *array_di,
 		pfb_close_context(c);
 		ADD_CC;
 	}
-
-	// NOTE regex cannot be done at this point if consolidation step destroys
-	// the DomainInfo as it does currently. only the linenumber from the file is
-	// preserved. each set of lines is kept in arrays; an array of line numbers
-	// for each context. i.e., parallel arrays.  this idea is to make writing a
-	// file simplier: it's one file to read and write for an entire set of data.
-	//
-	// alt option is to keep the domaininfo and later can do a regex prune. the
-	// fqd on the DomainInfo is useful for regex. the context on the DomainInfo
-	// is redundant though not harmful.
-	//
-	// at this point the pruning of regex could be done.  there may be cases
-	// where a regex pruned domain affects other domains in the tree. the regex
-	// would still prune all matches though
 
 	if(use_shared_buffer)
 	{
@@ -1092,11 +1022,7 @@ static void test_init_ArrayDi()
 
 	assert(array_di.cd);
 	assert(array_di.len_cd == 1);
-#ifdef REGEX_ENABLED
-	assert(array_di.cd[0].di);
-#else
 	assert(array_di.cd[0].linenumbers);
-#endif
 	assert(array_di.cd[0].next_idx == 0);
 	assert(array_di.cd[0].alloc_linenumbers == INITIAL_ARRAY_DOMAIN_INFO);
 
@@ -1480,13 +1406,13 @@ static void test_read_pfb_csv_TWOBETWEEN()
 static void test_pfb_strdup()
 {
 	// empty string is bogus; return NULL
-	assert(!pfb_strdup(""));
+	assert(!pfb_strdup("", 0));
 
 	char *dup = NULL;
 
 	const char *inp = "what is here";
 
-	dup = pfb_strdup(inp);
+	dup = pfb_strdup(inp, strlen(inp));
 	assert(dup);
 	// include null terminator in comparison
 	assert(!memcmp(dup, inp, 13));
@@ -1608,11 +1534,19 @@ static void test_pfb_insert()
 	CsvLineView_t lv_context;
 	init_CsvLineView(&lv_context);
 
-	pfb_insert(&pld, pfbc.begin_context, &lv_context);
+	DomainView_t dv_context;
+	init_DomainView(&dv_context);
+
+	ContextPair_t context;
+	context.lv = &lv_context;
+	context.dv = &dv_context;
+
+	pfb_insert(&pld, pfbc.begin_context, &context);
 
 	assert(pfbc.begin_context->dt[0] == NULL);
 
 	free_CsvLineView(&lv_context);
+	free_DomainView(&dv_context);
 	pfb_free_contexts(&pfbc);
 
 	char *buffer = malloc(sizeof(char) * 100);
@@ -1641,7 +1575,14 @@ static void test_pfb_insert_0()
 	CsvLineView_t lv_context;
 	init_CsvLineView(&lv_context);
 
-	pfb_insert(&pld, pfbc.begin_context, &lv_context);
+	DomainView_t dv_context;
+	init_DomainView(&dv_context);
+
+	ContextPair_t context;
+	context.lv = &lv_context;
+	context.dv = &dv_context;
+
+	pfb_insert(&pld, pfbc.begin_context, &context);
 
 	assert(pfbc.begin_context->dt[0]);
 	assert(pfbc.begin_context->dt[0]->di);
@@ -1650,6 +1591,7 @@ static void test_pfb_insert_0()
 	assert(pfbc.begin_context->dt[0]->di->context == pfbc.begin_context);
 
 	free_CsvLineView(&lv_context);
+	free_DomainView(&dv_context);
 	pfb_free_contexts(&pfbc);
 	ADD_TCC;
 
@@ -1677,7 +1619,14 @@ static void test_pfb_insert_1()
 	CsvLineView_t lv_context;
 	init_CsvLineView(&lv_context);
 
-	pfb_insert(&pld, pfbc.begin_context, &lv_context);
+	DomainView_t dv_context;
+	init_DomainView(&dv_context);
+
+	ContextPair_t context;
+	context.lv = &lv_context;
+	context.dv = &dv_context;
+
+	pfb_insert(&pld, pfbc.begin_context, &context);
 
 	assert(pfbc.begin_context->dt[0]);
 	assert(pfbc.begin_context->dt[0]->di);
@@ -1686,6 +1635,7 @@ static void test_pfb_insert_1()
 	assert(pfbc.begin_context->dt[0]->di->context == pfbc.begin_context);
 
 	free_CsvLineView(&lv_context);
+	free_DomainView(&dv_context);
 	pfb_free_contexts(&pfbc);
 	ADD_TCC;
 
@@ -1706,8 +1656,8 @@ static void test_pfb_insert_2()
 	pfb_open_context(pfbc.begin_context, false);
 
 	PortLineData_t pld;
-	// column 7 is REGEX_MATCH which means carry over for non-REGEX_ENABLED
-	// builds. this changes from previous behavior.
+	// column 7 is REGEX_MATCH which means insert regex into cached and carry
+	// over.
 	pld.data = ",something,that,has,many,columns,2,pfb_insert,wildly";
 	pld.linenumber = 10;
 	pld.len = strlen(pld.data);
@@ -1715,15 +1665,22 @@ static void test_pfb_insert_2()
 	CsvLineView_t lv_context;
 	init_CsvLineView(&lv_context);
 
-	pfb_insert(&pld, pfbc.begin_context, &lv_context);
+	DomainView_t dv_context;
+	init_DomainView(&dv_context);
+
+	ContextPair_t context;
+	context.lv = &lv_context;
+	context.dv = &dv_context;
+
+	pfb_insert(&pld, pfbc.begin_context, &context);
 
 	assert(!pfbc.begin_context->dt[0]);
 
-#ifndef REGEX_ENABLED
+	// always carry over regex lines and preserve their original location
 	assert(len_carry_over(&pfbc.begin_context->co) == 1);
-#endif
 
 	free_CsvLineView(&lv_context);
+	free_DomainView(&dv_context);
 	pfb_free_contexts(&pfbc);
 	ADD_TCC;
 
@@ -1732,12 +1689,8 @@ static void test_pfb_insert_2()
 	size_t read = fread(buffer, sizeof(char), 100, check_output);
 	fclose(check_output);
 
-#ifdef REGEX_ENABLED
-	assert(read == 53);
-	assert(!memcmp(buffer, ",something,that,has,many,columns,2,pfb_insert,wildly\n", 53));
-#else
+	// always carry over regex lines; nothing written.
 	assert(read == 0);
-#endif
 
 	free(buffer);
 }
@@ -1757,7 +1710,14 @@ static void test_pfb_insert_fewcols()
 	CsvLineView_t lv_context;
 	init_CsvLineView(&lv_context);
 
-	pfb_insert(&pld, pfbc.begin_context, &lv_context);
+	DomainView_t dv_context;
+	init_DomainView(&dv_context);
+
+	ContextPair_t context;
+	context.lv = &lv_context;
+	context.dv = &dv_context;
+
+	pfb_insert(&pld, pfbc.begin_context, &context);
 
 	assert(pfbc.begin_context->dt[0]);
 	assert(pfbc.begin_context->dt[0]->di);
@@ -1766,6 +1726,7 @@ static void test_pfb_insert_fewcols()
 	assert(pfbc.begin_context->dt[0]->di->context == pfbc.begin_context);
 
 	free_CsvLineView(&lv_context);
+	free_DomainView(&dv_context);
 	pfb_free_contexts(&pfbc);
 	ADD_TCC;
 
