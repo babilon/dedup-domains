@@ -42,7 +42,6 @@ typedef struct pfb_context
 	 * until pfb_consolidate().
 	 */
 	carry_over_t co;
-	struct pfb_regexes *regs;
 } pfb_context_t;
 
 typedef struct pfb_contexts
