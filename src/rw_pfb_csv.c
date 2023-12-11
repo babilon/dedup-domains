@@ -352,7 +352,7 @@ int read_pfb_line(pfb_context_t *pfbc,
 							end_buffer, &pos_buffer, &ld, false);
 				}
 
-				ASSERT(nextline != 0);
+				ASSERT(*nextline != 0);
 
 				if(newline)
 				{
