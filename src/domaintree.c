@@ -195,8 +195,7 @@ static void replace_DomainInfo(DomainTree_t *entry, DomainView_t *dv)
 	ADD_CC;
 }
 
-static DomainTree_t *init_DomainTree(DomainTree_t *parent,
-		SubdomainView_t const *sdv)
+static DomainTree_t *init_DomainTree(SubdomainView_t const *sdv)
 {
 	// the DomainTree_t instance must be memset since it is inserted into a
 	// UT_hash. alternate options available such as defining a hash function and
@@ -204,7 +203,6 @@ static DomainTree_t *init_DomainTree(DomainTree_t *parent,
 	DomainTree_t *ndt = calloc(1, sizeof(DomainTree_t));
 
 	ndt->len = sdv->len;
-	ndt->parent = parent;
 
 	ndt->tld = malloc(sizeof(char) * sdv->len);
 	memcpy(ndt->tld, sdv->data, sdv->len);
@@ -224,7 +222,7 @@ static DomainTree_t* ctor_DomainTree(DomainTree_t **dt, DomainViewIter_t *it,
 	ASSERT(it);
 	ASSERT(sdv);
 
-	DomainTree_t *ndt = NULL, *parent = DT_PARENT(*dt);
+	DomainTree_t *ndt = NULL;
 
 	// (0) enters with 'com' or 'net' or 'org' a TLD
 	do
@@ -232,7 +230,7 @@ static DomainTree_t* ctor_DomainTree(DomainTree_t **dt, DomainViewIter_t *it,
 		// (0) enters with 'com' or 'net' or 'org' a TLD
 		// (1) create entry for 'google'
 		// (2) create entry for 'www'
-		ndt = init_DomainTree(parent, sdv);
+		ndt = init_DomainTree(sdv);
 		ASSERT(ndt);
 
 		// (0) NULL dt is OK it means the HASH table is empty
@@ -265,7 +263,6 @@ static DomainTree_t* ctor_DomainTree(DomainTree_t **dt, DomainViewIter_t *it,
 		// (0) parent will be 'com'
 		// (1) parent will be 'google'
 		// (2) parent will be 'www'
-		parent = ndt;
 
 		ADD_CC;
 	// (1) set sdv to 'google' in 'www.google.com'

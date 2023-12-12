@@ -32,7 +32,6 @@ typedef struct DomainTree
 
 	struct DomainInfo *di;
 	struct DomainTree *child;
-	struct DomainTree *parent;
 	UT_hash_handle hh;
 } DomainTree_t;
 
@@ -48,8 +47,5 @@ extern void visit_DomainTree(DomainTree_t *root,
 		void(*visitor_func)(struct DomainInfo const *di, void *context),
 		void *context);
 extern void print_DomainTree(DomainTree_t *root);
-
-#define DT_PARENT(dt) \
-	((dt) == NULL ? NULL : (dt)->parent)
 
 #endif
