@@ -89,6 +89,8 @@ int main(int argc, char *const * argv)
 	{
 		extern void run_tests();
 		run_tests();
+		free_globalErrLog();
+		free_globalStdLog();
 		return 0;
 	}
 #endif

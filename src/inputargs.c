@@ -1063,6 +1063,7 @@ static void test_errLog()
 
 	free_input_args(&args);
 	free(global_errLog);
+	global_errLog = NULL;
 	ADD_TCC;
 }
 

@@ -7,7 +7,7 @@ TEST003 := -o .t03 -x .fat -d tests/003_inputs/
 SORT001 := -o .txt -x .fat -d tests/001_inputs/
 
 VALGRIND := valgrind
-LEAKARGS := -s --track-origins=yes --tool=memcheck --leak-check=full
+LEAKARGS := -s --track-origins=yes --tool=memcheck --leak-check=full --show-leak-kinds=all
 
 valgrind: main
 	@$(VALGRIND) $(LEAKARGS) ./${BINDIR}/$<.real $(SMLTEST)
