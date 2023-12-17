@@ -766,6 +766,8 @@ void pfb_write_csv(pfb_contexts_t *cs, ArrayDomainInfo_t *array_di,
 		ADD_CC;
 	}
 
+	free_CsvLineView(&lv);
+
 	if(use_shared_buffer)
 	{
 		free(shared_buffer);
