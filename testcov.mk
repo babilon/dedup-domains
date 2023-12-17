@@ -33,12 +33,6 @@ test001: main
 test003: main
 	time ./$(BINDIR)/$<.real $(TEST003)
 
-regexbig: regex
-	time ./${BINDIR}/$<.real $(BIGTEST)
-
-valgrindregex: regex
-	@$(VALGRIND) $(LEAKARGS) ./${BINDIR}/$<.real $(SMLTEST)
-
 realbig: release
 	time ./${BINDIR}/$<.real $(BIGTEST)
 
