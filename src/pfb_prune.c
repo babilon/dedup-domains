@@ -1587,7 +1587,7 @@ static void test_pfb_insert_0()
 	assert(pfbc.begin_context->dt[0]);
 	assert(pfbc.begin_context->dt[0]->di);
 	assert(pfbc.begin_context->dt[0]->di->linenumber == 10);
-	assert(pfbc.begin_context->dt[0]->di->match_strength == 0);
+	assert(pfbc.begin_context->dt[0]->match_strength == MATCH_WEAK);
 	assert(pfbc.begin_context->dt[0]->di->context == pfbc.begin_context);
 
 	free_CsvLineView(&lv_context);
@@ -1631,7 +1631,7 @@ static void test_pfb_insert_1()
 	assert(pfbc.begin_context->dt[0]);
 	assert(pfbc.begin_context->dt[0]->di);
 	assert(pfbc.begin_context->dt[0]->di->linenumber == 11);
-	assert(pfbc.begin_context->dt[0]->di->match_strength == 1);
+	assert(pfbc.begin_context->dt[0]->match_strength == MATCH_FULL);
 	assert(pfbc.begin_context->dt[0]->di->context == pfbc.begin_context);
 
 	free_CsvLineView(&lv_context);
@@ -1722,7 +1722,7 @@ static void test_pfb_insert_fewcols()
 	assert(pfbc.begin_context->dt[0]);
 	assert(pfbc.begin_context->dt[0]->di);
 	assert(pfbc.begin_context->dt[0]->di->linenumber == 12);
-	assert(pfbc.begin_context->dt[0]->di->match_strength == 0);
+	assert(pfbc.begin_context->dt[0]->match_strength == MATCH_WEAK);
 	assert(pfbc.begin_context->dt[0]->di->context == pfbc.begin_context);
 
 	free_CsvLineView(&lv_context);

@@ -21,6 +21,7 @@
 #ifndef DOMAIN_TREE_H
 #define DOMAIN_TREE_H
 #include "dedupdomains.h"
+#include "matchstrength.h"
 #include "uthash.h"
 
 typedef struct DomainTree
@@ -29,6 +30,8 @@ typedef struct DomainTree
 	char *tld;
 	// domain segments are at most 63 bytes
 	uchar len;
+
+	MatchStrength_t match_strength;
 
 	struct DomainInfo *di;
 	struct DomainTree *child;

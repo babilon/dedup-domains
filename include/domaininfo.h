@@ -21,7 +21,6 @@
 #ifndef DOMAIN_INFO_H
 #define DOMAIN_INFO_H
 #include "dedupdomains.h"
-#include "matchstrength.h"
 
 struct DomainView;
 
@@ -37,10 +36,8 @@ typedef struct DomainInfo
 	// useful/necessary for tests and debug.
 	// necessary for regex pruning
 	char *fqd;
+	size_len_t len; // number of characters in fqd, e.g., www.google.com
 #endif
-	size_len_t len; // number of characters in fqd
-	MatchStrength_t match_strength;
-	bool alive;
 } DomainInfo_t;
 
 extern DomainInfo_t* convert_DomainInfo(struct DomainView *dv);

@@ -122,6 +122,7 @@ void free_DomainView(DomainView_t *dv)
 static bool get_SubdomainView(DomainView_t *dv, size_len_t idx,
 		SubdomainView_t *sdv)
 {
+	ASSERT(sdv);
 #ifdef USE_MEMSET
 	memset(sdv, 0, sizeof(SubdomainView_t));
 #endif
@@ -172,6 +173,7 @@ DomainViewIter_t begin_DomainView(DomainView_t *dv)
  */
 bool next_DomainView(DomainViewIter_t *it, SubdomainView_t *sdv)
 {
+	ASSERT(it);
 	bool b = false;
 
 	if(it && it->cur_seg < it->dv->segs_used)

@@ -36,14 +36,9 @@ static DomainInfo_t* init_DomainInfo()
 	di->context = NULL;
 #ifdef BUILD_TESTS
 	di->fqd = NULL;
-#endif
 	di->len = 0;
-	di->match_strength = MATCH_WEAK;
 #endif
-
-	// all domains are alive until regex trim is introduced.
-	di->alive = true;
-
+#endif
 	ADD_CC;
 	return di;
 }
@@ -76,10 +71,9 @@ DomainInfo_t *convert_DomainInfo(DomainView_t *dv)
 	// fqd is necessary for tests where it is used to verify behaviors
 	// fqd is necessary for regex prune
 	di->fqd = malloc(sizeof(char) * dv->len);
+	di->len = dv->len;
 	memcpy(di->fqd, dv->fqd, dv->len);
 #endif
-	di->len = dv->len;
-	di->match_strength = dv->match_strength;
 	di->context = dv->context;
 	di->linenumber = dv->linenumber;
 
@@ -138,15 +132,9 @@ void transfer_DomainInfo(DomainTree_t **root,
 
 		HASH_DEL(*root, current);
 
-		// XXX currently all DomainInfo_t remain alive. with regex, some may be
-		// marked dead. this may not be free'ing those DomainInfo.
-		// regex might prune for each context. if every FILE is handled
-		// separately and all domains are already consolidated into the main
-		// array, then regex pruning can delete or kill (alive=false) what is
-		// not useful.
-		if(current->di/* && current->di->alive*/)
+		if(current->match_strength > MATCH_NOTSET)
 		{
-			ASSERT(current->di->alive);
+			ASSERT(current->di);
 			ASSERT(current->di->linenumber != 0);
 			collector(&(current->di), context);
 			ASSERT(!current->di);
@@ -191,6 +179,7 @@ void free_DomainTree(DomainTree_t **root)
 static void replace_DomainInfo(DomainTree_t *entry, DomainView_t *dv)
 {
 	free_DomainInfo(&entry->di);
+	entry->match_strength = dv->match_strength;
 	entry->di = convert_DomainInfo(dv);
 	ADD_CC;
 }
@@ -202,6 +191,7 @@ static DomainTree_t *init_DomainTree(SubdomainView_t const *sdv)
 	// comparison. default requires all padding be zero'ed.
 	DomainTree_t *ndt = calloc(1, sizeof(DomainTree_t));
 
+	ndt->match_strength = MATCH_NOTSET;
 	ndt->len = sdv->len;
 
 	ndt->tld = malloc(sizeof(char) * sdv->len);
@@ -273,10 +263,50 @@ static DomainTree_t* ctor_DomainTree(DomainTree_t **dt, DomainViewIter_t *it,
 	// (3) sdv is NULL; prev_sdv is 'www'
 	// need to set the DomainInfo for 'www' held at ndt
 	ASSERT(ndt);
+	ASSERT(it->dv->match_strength > MATCH_NOTSET);
+	ndt->match_strength = it->dv->match_strength;
 	ndt->di = convert_DomainInfo(it->dv);
 
 	ADD_CC;
 	return ndt;
+}
+
+static DomainTree_t* replace_if_stronger(DomainTree_t *entry, DomainView_t *dv)
+{
+	ASSERT(entry);
+	ASSERT(dv);
+
+	ASSERT(dv->match_strength > MATCH_NOTSET);
+	ASSERT(dv->match_strength != MATCH_REGEX);
+
+	if(dv->match_strength > entry->match_strength)
+	{
+		replace_DomainInfo(entry, dv);
+
+		if(entry->match_strength == MATCH_FULL)
+		{
+			ADD_CC;
+			free_DomainTree(&entry->child);
+		}
+		DEBUG_PRINTF("[%s:%d] %s replace existing entry with stronger match; inserted.\n", __FILE__, __LINE__, __FUNCTION__);
+		DEBUG_PRINTF("\ttld=%.*s\n", (int)entry->len, entry->tld);
+#ifdef BUILD_TESTS
+		DEBUG_PRINTF("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
+#endif
+		ADD_CC;
+		return entry;
+	}
+	else // not strong enough to override
+	{
+		DEBUG_PRINTF("[%s:%d] %s identical; skip insert.\n", __FILE__, __LINE__, __FUNCTION__);
+		DEBUG_PRINTF("\ttld=%.*s\n", (int)entry->len, entry->tld);
+#ifdef BUILD_TESTS
+		DEBUG_PRINTF("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
+#endif
+		ADD_CC;
+	}
+
+	return NULL;
 }
 
 static bool leaf_DomainTree(DomainTree_t const *dt)
@@ -288,165 +318,53 @@ static bool leaf_DomainTree(DomainTree_t const *dt)
 	return HASH_COUNT(dt->child) == 0;
 }
 
-static DomainTree_t* insert_Domain(DomainTree_t **dt, DomainViewIter_t *it, SubdomainView_t *sdv)
+static DomainTree_t* insert_Domain(DomainTree_t **root_dt, DomainView_t *dv)
 {
-	ASSERT(dt);
-	ASSERT(sdv);
-	ASSERT(sdv->data);
-	ASSERT(sdv->len > 0);
+	ASSERT(root_dt);
 
+	DomainTree_t **dt = root_dt;
 	DomainTree_t *entry = NULL;
-	HASH_FIND(hh, *dt, sdv->data, sdv->len, entry);
-	if(entry)
-	{
-		// e.g., found a FQD with a DomainInfo
-		// google.com
-		// ^
-		if(leaf_DomainTree(entry))
-		{
-			// is the existing leaf strong? if so, abort adding the requested
-			// b/c it's the same strength or weaker and in both cases not
-			// beneficial to the tree.
-			if(entry->di->match_strength == MATCH_FULL)
-			{
-				// item is weaker; no insertion.
-				DEBUG_PRINTF("[%s:%d] %s item is weaker; skip insert.\n", __FILE__, __LINE__, __FUNCTION__);
-				DEBUG_PRINTF("\tsdv=%.*s\n", (int)sdv->len, sdv->data);
-#ifdef BUILD_TESTS
-				DEBUG_PRINTF("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
-#endif
-				DEBUG_PRINTF("\texisting match:%d\n", entry->di->match_strength);
-				ADD_CC;
-				return NULL;
-			}
-			// else compare FQD for equality
-			// entry: 'www.google.com' 0
-			// it-dv:	  'google.com' 1
-			//
-			// entry: 'www.google.com' 0
-			// it-dv: 'abc.google.com' 1
-			//
-			// entry: 'www.google.com' 0
-			// it-dv: 'blarg.www.google.com' 1
-			//
-			// entry: 'www.google.com' 0
-			// it-dv: 'www.google.com' 1
-			if(entry->di->len == it->dv->len)
-			{
-#ifdef BUILD_TESTS
-				// when the length is the same, the domain is equal b/c every
-				// step to this point has found an entry in the next hash table.
-				assert(!memcmp(entry->di->fqd, it->dv->fqd, entry->di->len) && "tests only");
-#endif
-				if(it->dv->match_strength > entry->di->match_strength)
-				{
-					replace_DomainInfo(entry, it->dv);
-					// expect zero children to delete at this level
-					ASSERT(!entry->child);
-					if(entry->child)
-					{
-						ELOG_STDERR("ALERT: unexpected child at %s:%d\n", __FILE__, __LINE__);
-						free_DomainTree(&entry->child);
-					}
-					DEBUG_PRINTF("[%s:%d] %s replace existing entry with stronger match; inserted.\n", __FILE__, __LINE__, __FUNCTION__);
-					DEBUG_PRINTF("\tsdv=%.*s\n", (int)sdv->len, sdv->data);
-					DEBUG_PRINTF("\ttld=%.*s\n", (int)entry->len, entry->tld);
-#ifdef BUILD_TESTS
-					DEBUG_PRINTF("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
-#endif
-					ADD_CC;
-					return entry;
-				}
-				else // not strong enough to override
-				{
-					DEBUG_PRINTF("[%s:%d] %s identical; skip insert.\n", __FILE__, __LINE__, __FUNCTION__);
-					DEBUG_PRINTF("\tsdv=%.*s\n", (int)sdv->len, sdv->data);
-					DEBUG_PRINTF("\ttld=%.*s\n", (int)entry->len, entry->tld);
-#ifdef BUILD_TESTS
-					DEBUG_PRINTF("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
-#endif
-					ADD_CC;
-					return NULL;
-				}
-			}
-			else
-			{
-				// the length check is necessary. it would be a case where
-				// everything above the current label matches and the proposed
-				// has some extra bit of information that makes it special.
-				DEBUG_PRINTF("di len=%lu\n", (size_t)entry->di->len);
-				DEBUG_PRINTF("dv len=%lu\n", (size_t)it->dv->len);
-				ASSERT(entry->di->len < it->dv->len);
-				ADD_CC;
-			}
-			//else differs; fall through to go deeper
-			ADD_CC;
-		}
 
-		// else not a leaf; go deeper.
-		if(next_DomainView(it, sdv))
+	DomainViewIter_t it = begin_DomainView(dv);
+	SubdomainView_t sdv;
+
+	while(next_DomainView(&it, &sdv))
+	{
+		ASSERT(dt);
+		ASSERT(sdv.data);
+		ASSERT(sdv.len > 0);
+		HASH_FIND(hh, *dt, sdv.data, sdv.len, entry);
+
+		if(!entry)
 		{
-			ADD_CC;
-			return insert_Domain(&(entry->child), it, sdv);
-		}
-		//else
-		//{
-		// at the end of the SubdomainView .. there are no more segments to
-		// inspect. must consider to insert this sdv or drop it.
-		if(entry->di == NULL)
-		{
-			if(it->dv->match_strength == MATCH_FULL)
-			{
-				// clear possible children
-				free_DomainTree(&entry->child);
-				ADD_CC;
-			}
-			// create entry for this DomainInfo.
-			entry->di = convert_DomainInfo(it->dv);
-			DEBUG_PRINTF("[%s:%d] %s next_tld is nil; cleared children and inserted.\n", __FILE__, __LINE__, __FUNCTION__);
-#ifdef BUILD_TESTS
-			DEBUG_PRINTF("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
-#endif
+			entry = ctor_DomainTree(dt, &it, &sdv);
+			ASSERT(entry);
+			ASSERT(entry->match_strength > MATCH_NOTSET);
 			ADD_CC;
 			return entry;
 		}
-		else // existing di; overwrite it.
+
+		if(leaf_DomainTree(entry))
 		{
-			if(entry->di->match_strength < it->dv->match_strength)
+			ASSERT(entry->match_strength > MATCH_NOTSET);
+			ASSERT(entry->match_strength != MATCH_REGEX);
+			if(entry->match_strength == MATCH_FULL)
 			{
-				// clear possible children
-				free_DomainTree(&entry->child);
-				replace_DomainInfo(entry, it->dv);
-				DEBUG_PRINTF("[%s:%d] %s next_tld is nil; replace it, clear children and insert.\n", __FILE__, __LINE__, __FUNCTION__);
-#ifdef BUILD_TESTS
-				DEBUG_PRINTF("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
-#endif
 				ADD_CC;
-				return entry;
+				return NULL;
 			}
 			ADD_CC;
 		}
+
+		dt = &entry->child;
 		ADD_CC;
-		//}
-	}
-	else // entry is NULL; no match found for 'com' in 'www.google.com'
-	{
-		// sdv is valid b/c next_tld is true
-		// use 'entry' here since it's local, unused and NULL.
-		// was 'ntd' to mean next top level domain
-		ASSERT(!entry);
-		entry = ctor_DomainTree(dt, it, sdv);
-		DEBUG_PRINTF("[%s:%d] %s build tree; inserted. dt=%p ndt=%p\n", __FILE__, __LINE__, __FUNCTION__, *dt, entry);
-		DEBUG_PRINTF("\tsdv=%.*s\n", (int)sdv->len, sdv->data);
-#ifdef BUILD_TESTS
-		DEBUG_PRINTF("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
-#endif
-		ADD_CC;
-		return entry;
 	}
 
+	// if 'entry' is null, then 'dv' is garbage, i.e., not a domain.
+	ASSERT(entry);
+	entry = replace_if_stronger(entry, dv);
 	ADD_CC;
-	return NULL;
+	return entry;
 }
 
 DomainTree_t* insert_DomainTree(DomainTree_t **dt, DomainView_t *dv)
@@ -473,18 +391,10 @@ DomainTree_t* insert_DomainTree(DomainTree_t **dt, DomainView_t *dv)
 		return NULL;
 	}
 
-	DomainTree_t *blarg = NULL;
-	DomainViewIter_t it = begin_DomainView(dv);
-
-	SubdomainView_t sdv;
-	if(next_DomainView(&it, &sdv))
-	{
-		blarg = insert_Domain(dt, &it, &sdv);
-		ADD_CC;
-	}
+	DomainTree_t *entry = insert_Domain(dt, dv);
 
 	ADD_CC;
-	return blarg;
+	return entry;
 }
 
 static void do_visit_DomainTree(DomainTree_t *root,
@@ -506,10 +416,12 @@ static void do_visit_DomainTree(DomainTree_t *root,
 		// must visit each child
 		do_visit_DomainTree(dt->child, visitor_func, context);
 
-		if(dt->di && dt->di->alive)
+		if(dt->match_strength > MATCH_NOTSET)
 		{
+			ASSERT(dt->di);
+			DEBUG_PRINTF("DT: Visited strength=%d label=%.*s\n", dt->match_strength, (int)dt->len, dt->tld);
 #ifdef BUILD_TESTS
-			DEBUG_PRINTF("DT: Visited %.*s\n", (int)dt->di->len, dt->di->fqd);
+			DEBUG_PRINTF("DT: Visited fqd=%.*s\n", (int)dt->di->len, dt->di->fqd);
 #endif
 			(*visitor_func)(dt->di, context);
 			ADD_CC;
