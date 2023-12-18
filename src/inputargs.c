@@ -1,5 +1,5 @@
 /**
- * main.c
+ * inputargs.c
  *
  * Part of pfb_dnsbl_prune
  *
