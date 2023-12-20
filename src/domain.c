@@ -358,6 +358,7 @@ bool update_DomainView(DomainView_t *dv, char const *fqd, size_len_t len)
 	return true;
 }
 
+#ifdef BUILD_TESTS
 DomainView_t parse_Domain(char const *fqd, size_len_t len)
 {
 	DomainView_t dv;
@@ -370,7 +371,6 @@ DomainView_t parse_Domain(char const *fqd, size_len_t len)
 	return dv;
 }
 
-#ifdef BUILD_TESTS
 static DomainViewIter_t end_DomainView(DomainView_t *dv)
 {
 	DomainViewIter_t it;

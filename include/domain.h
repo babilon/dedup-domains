@@ -101,7 +101,6 @@ typedef struct SubdomainView
 } SubdomainView_t;
 
 extern void init_DomainView(DomainView_t *dv);
-extern DomainView_t parse_Domain(char const *fqd, size_len_t len);
 extern bool update_DomainView(DomainView_t *dv, char const *fqd, size_len_t len);
 extern void free_DomainView(DomainView_t *dv);
 
