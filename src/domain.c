@@ -195,6 +195,39 @@ bool null_DomainView(DomainView_t const *dv)
 	return dv->lengths == NULL;
 }
 
+static void realloc_labels(DomainView_t *dv, size_len_t count)
+{
+	dv->segs_alloc += count;
+	size_len_t *tmpS = realloc(dv->label_indexes, sizeof(size_len_t) * dv->segs_alloc);
+	if(tmpS)
+	{
+		dv->label_indexes = tmpS;
+		tmpS = NULL;
+		ADD_CC;
+	}
+	else
+	{
+		free(dv->label_indexes);
+		exit(EXIT_FAILURE);
+	}
+	uchar *tmp = realloc(dv->lengths, sizeof(uchar) * dv->segs_alloc);
+	if(tmp)
+	{
+		dv->lengths = tmp;
+		tmp = NULL;
+		ADD_CC;
+	}
+	else
+	{
+		free(dv->lengths);
+		exit(EXIT_FAILURE);
+	}
+#ifdef COLLECT_DIAGNOSTICS
+	dv->count_realloc++;
+#endif
+	ADD_CC;
+}
+
 /**
  * Suppose this is fed domains which are certain to be subdomains of the given
  * DomainView_t or entirely unique and a new DomainView_t is required. this then returns
@@ -245,32 +278,7 @@ bool update_DomainView(DomainView_t *dv, char const *fqd, size_len_t len)
 		{
 			if(dv->segs_used >= dv->segs_alloc)
 			{
-				dv->segs_alloc += 4;
-				size_len_t *tmpS = realloc(dv->label_indexes, sizeof(size_len_t) * dv->segs_alloc);
-				if(tmpS)
-				{
-					dv->label_indexes = tmpS;
-					tmpS = NULL;
-				}
-				else
-				{
-					free(dv->label_indexes);
-					exit(EXIT_FAILURE);
-				}
-				uchar *tmp = realloc(dv->lengths, sizeof(uchar) * dv->segs_alloc);
-				if(tmp)
-				{
-					dv->lengths = tmp;
-					tmp = NULL;
-				}
-				else
-				{
-					free(dv->lengths);
-					exit(EXIT_FAILURE);
-				}
-#ifdef COLLECT_DIAGNOSTICS
-				dv->count_realloc++;
-#endif
+				realloc_labels(dv, 4);
 				ADD_CC;
 			}
 			// 01234567890
@@ -319,30 +327,7 @@ bool update_DomainView(DomainView_t *dv, char const *fqd, size_len_t len)
 
 	if(dv->segs_used >= dv->segs_alloc)
 	{
-		dv->segs_alloc++;
-		size_len_t *tmp = realloc(dv->label_indexes, sizeof(size_len_t) * dv->segs_alloc);
-		if(tmp)
-		{
-			dv->label_indexes = tmp;
-			tmp = NULL;
-		}
-		else
-		{
-			free(dv->label_indexes);
-			exit(EXIT_FAILURE);
-		}
-		uchar *tmpC = realloc(dv->lengths, sizeof(uchar) * dv->segs_alloc);
-		if(tmpC)
-		{
-			dv->lengths = tmpC;
-			tmpC = NULL;
-		}
-		else
-		{
-			free(dv->lengths);
-			exit(EXIT_FAILURE);
-		}
-
+		realloc_labels(dv, 1);
 		ADD_CC;
 	}
 
