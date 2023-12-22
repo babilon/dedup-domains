@@ -21,6 +21,7 @@
 #ifndef DOMAIN_INFO_H
 #define DOMAIN_INFO_H
 #include "dedupdomains.h"
+#include "matchstrength.h"
 
 struct DomainView;
 
@@ -31,6 +32,7 @@ typedef struct DomainInfo
 	// line number from and file to write to.
 	void *context;
 	linenumber_t linenumber;
+	MatchStrength_t match_strength;
 
 #if defined(BUILD_TESTS)
 	// useful/necessary for tests and debug.
