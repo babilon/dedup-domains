@@ -72,19 +72,17 @@ class DomainPointer:
                 int(csv_row[6])
 
         self._rev_domain = self._domain.split('.')
-        self.iter_subdomains = reversed(self._rev_domain)
+        self.rev_subdomains = reversed(self._rev_domain)
         self._file_row = file_row
         self._alive_and_well = True
-
-    def next_tld(self):
-        try:
-            return next(self.iter_subdomains)
-        except StopIteration:
-            return None
 
     @property
     def file_row(self):
         return self._file_row
+
+    @property
+    def is_childless(self):
+        return self.match_strength == 1 or self.match_strength == 2
 
     @property
     def match_strength(self):
@@ -110,14 +108,12 @@ class DomainInfo:
     def __init__(self, csv_row, _):
         self.csv_row = csv_row
         self._rev_domain = self.domain.split('.')
-        self.iter_subdomains = reversed(self._rev_domain)
+        self.rev_subdomains = reversed(self._rev_domain)
         self._alive_and_well = True
 
-    def next_tld(self):
-        try:
-            return next(self.iter_subdomains)
-        except StopIteration:
-            return None
+    @property
+    def is_childless(self):
+        return self.match_strength == 1 or self.match_strength == 2
 
     @property
     def match_strength(self):
@@ -145,21 +141,9 @@ class DomainInfo:
         self._alive_and_well = False
 
 class DomainTree:
-    def __init__(self, tld=None, di=None):
+    def __init__(self, di=None):
         self.children = {}
-        self.tld = tld
-        self.di = None
-        self.is_root = self.tld is None and di is None
-
-        if self.is_root:
-            return
-
-        next_tld = di.next_tld()
-        if next_tld is not None:
-            self.children[next_tld] = DomainTree(next_tld, di)
-        else:
-            # children is empty which means it is a leaf
-            self.di = di
+        self.di = di
 
     @property
     def is_leaf(self):
@@ -171,65 +155,29 @@ class DomainTree:
                 visitor(c.di)
             c.visit_leaves(visitor)
 
-    def insert(self, di):
-        next_tld = di.next_tld()
-        if next_tld is not None:
-            c = self.children.get(next_tld)
-            if c is not None:
-                if c.is_leaf:
-                    if c.di.match_strength == 1:
-                        return False
+    def insert(self, dv):
+        dt = self
+        next_dt = dt
 
-                    if c.di.domain == di.domain:
-                        if di.match_strength == 1:
-                            #print("overwrite: c is weaker than di:")
-                            #print("\t", c.csv_row)
-                            #print("\t", di.csv_row)
-                            c.di = di
-                            return True
-                        else:
-                            return False
+        for next_tld in dv.rev_subdomains:
+            dt = next_dt
 
-                return c.insert(di)
+            if next_tld not in dt.children:
+                dt.children[next_tld] = DomainTree()
 
-            # didn't find a matching subdomain
-            #print("overwrite children of tld:", next_tld)
-            #print("len of children pruned:", len(self.children))
-            self.children[next_tld] = DomainTree(next_tld, di)
+            next_dt = dt.children[next_tld]
+            if next_dt.di is None:
+                continue
+            elif next_dt.is_leaf:
+                if next_dt.di.is_childless:
+                    return False
+
+        # replace if stronger
+        if next_dt.di is None or dv.match_strength > next_dt.di.match_strength:
+            next_dt.di = dv
+            if dv.is_childless:
+                next_dt.children = {}
             return True
-
-        # e.g. di is google.com and self.tld is 'google'
-        # we have a duplicate. is this 'di' stronger than self?
-        else:
-            # we have reached a case where the incoming 'di' is at a terminus.
-            # there is no deeper levels to go. if it is a strong match and
-            # self.di is None i.e. self is not a leaf or a terminous, then we
-            # can make self a terminal and be done.
-            if self.di is None:
-                if di.match_strength == 1:
-                    #for k in self.children.keys():
-                        #print("for: self is None, di is strong: purging all children of:", k)
-                    #print("self is None, di is strong: purging all children of:", k)
-                    #print("len of children pruned:", len(self.children))
-                    self.children = {}
-                    #self.di = di
-                #else: # di.match_strength == 0:
-                    #self.di = di
-                self.di = di
-                return True
-
-            # there might be children since middle ware things can now have a
-            # greater strength match and not be a leaf. clear children as they
-            # are obliterated.
-            #assert(self.di is not None)
-            if self.di.match_strength < di.match_strength:
-                self.di = di
-                #for k in self.children.keys():
-                    #print("for: self weaker than di: purging all children of:", k)
-                #print("self weaker than di: purging all children of:", k)
-                #print("len of children pruned:", len(self.children))
-                self.children = {}
-                return True
 
         return False
 
