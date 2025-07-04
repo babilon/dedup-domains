@@ -74,8 +74,6 @@ static void init_LineData(LineData_t *ld)
 
 	ld->pos = ld->buffer;
 	ld->alloc = initial_size;
-
-	ADD_CC;
 }
 
 static void free_LineData(LineData_t *ld)
@@ -92,8 +90,6 @@ static void free_LineData(LineData_t *ld)
 	ld->alloc = 0;
 	ld->linenumber = 0;
 #endif
-
-	ADD_CC;
 }
 
 static void reset_LineData(LineData_t *ld)
@@ -102,7 +98,6 @@ static void reset_LineData(LineData_t *ld)
 	ld->pos = ld->buffer;
 	ld->len = 0;
 
-	ADD_CC;
 }
 
 /**
@@ -134,7 +129,6 @@ static bool load_LineData(char const *buffer, char const *end_buffer,
 	while(c != end_buffer && *c != '\n' && *c != '\r')
 	{
 		c++;
-		ADD_CC;
 	}
 
 	// update position of output buffer. the next line or next block of data
@@ -157,7 +151,6 @@ static bool load_LineData(char const *buffer, char const *end_buffer,
 		request_alloc = MAX_ALLOC_LINE;
 		// fix length to the max supported ignoring the stuff after
 		len = request_alloc - ld->len - 1;
-		ADD_CC;
 	}
 
 	// when skipping lines of no interest, at minimum, the "length" of the line
@@ -168,7 +161,6 @@ static bool load_LineData(char const *buffer, char const *end_buffer,
 
 	if(skipline)
 	{
-		ADD_CC;
 		// true indicates a \n or \r was read
 		// false indicates more reading necessary.
 		return found_newline;
@@ -184,14 +176,12 @@ static bool load_LineData(char const *buffer, char const *end_buffer,
 			ld->buffer = tmp;
 			ld->pos = ld->buffer + offset;
 			ld->alloc = request_alloc;
-			ADD_CC;
 		}
 		else
 		{
 			ELOG_STDERR("ERROR: memory reallocation failed.\n");
 			return found_newline;
 		}
-		ADD_CC;
 	}
 
 	// null terminator is excluded from the "length" of the string.  don't copy
@@ -206,10 +196,8 @@ static bool load_LineData(char const *buffer, char const *end_buffer,
 	if(found_newline)
 	{
 		*ld->pos = '\0';
-		ADD_CC;
 	}
 
-	ADD_CC;
 	// true indicates a \n or \r was read
 	// false indicates more reading necessary.
 	return found_newline;
@@ -280,7 +268,6 @@ int read_pfb_line(pfb_context_t *pfbc,
 	// line number' two checks vs 1.
 	if(*nextline == 0)
 	{
-		ADD_CC;
 		// only real reason is to indicate nothing read
 		return 0;
 	}
@@ -294,7 +281,6 @@ int read_pfb_line(pfb_context_t *pfbc,
 		{
 			exit(EXIT_FAILURE);
 		}
-		ADD_CC;
 	}
 
 	// one LineData for the entire read operation. this is also tracking the
@@ -373,7 +359,6 @@ int read_pfb_line(pfb_context_t *pfbc,
 						pld.len = ld.len;
 
 						do_stuff(&pld, pfbc, context);
-						ADD_CC;
 					}
 
 					// the callback will modify 'nextline'. if the next line of
@@ -386,27 +371,20 @@ int read_pfb_line(pfb_context_t *pfbc,
 						escape = true;
 						// terminates the inner loop
 						pos_buffer = end_buffer;
-						ADD_CC;
 					}
 					else
 					{
 						reset_LineData(&ld);
-						ADD_CC;
 					}
-					ADD_CC;
 				}
 
 				// move past the newline characters
 				while(pos_buffer != end_buffer && (*pos_buffer == '\r' || *pos_buffer == '\n'))
 				{
 					pos_buffer++;
-					ADD_CC;
 				}
-				ADD_CC;
 			} while(pos_buffer != end_buffer);
-			ADD_CC;
 		}
-		ADD_CC;
 	} while(feof(f) == 0 && !escape);
 
 	// the last line. if the file ends w/o a newline, it's still a line.
@@ -422,7 +400,6 @@ int read_pfb_line(pfb_context_t *pfbc,
 
 		do_stuff(&pld, pfbc, context);
 
-		ADD_CC;
 	}
 
 	size_t lines_read = ld.linenumber;
@@ -433,9 +410,7 @@ int read_pfb_line(pfb_context_t *pfbc,
 	if(!shared_buffer)
 	{
 		free(local_buffer);
-		ADD_CC;
 	}
-	ADD_CC;
 
 	return lines_read;
 }
@@ -454,7 +429,6 @@ static int writeline(FILE *f, PortLineData_t const *pld)
 	if(fwrite("\n", sizeof(char), 1, f) != 1)
 		return -2;
 
-	ADD_CC;
 	return 0; // A-OK
 }
 
@@ -494,17 +468,14 @@ void write_pfb_csv_callback(PortLineData_t const *const pld, pfb_context_t *pfbc
 	if(nlc->linenumbers == nlc->begin_array + nlc->len)
 	{
 		nlc->next_linenumber = 0;
-		ADD_CC;
 	}
 	else
 	{
 		// there are no more line numbers for this context to be processed.
 		// update the output parameter. 0 means stop.
 		nlc->next_linenumber = *nlc->linenumbers;
-		ADD_CC;
 	}
 
-	ADD_CC;
 }
 
 void write_pfb_csv(PortLineData_t const *const pld, pfb_context_t *pfbc)
@@ -519,7 +490,6 @@ void write_pfb_csv(PortLineData_t const *const pld, pfb_context_t *pfbc)
 		ELOG_STDERR("ERROR (%d) while attempting to write line (%s) to '%s'\n",
 				err, pld->data, pfbc->out_fname);
 	}
-	ADD_CC;
 }
 
 /**

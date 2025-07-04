@@ -67,8 +67,6 @@ void init_DomainView(DomainView_t *dv)
 	{
 		exit(EXIT_FAILURE);
 	}
-
-	ADD_CC;
 }
 
 void free_DomainView(DomainView_t *dv)
@@ -111,8 +109,6 @@ void free_DomainView(DomainView_t *dv)
 	dv->max_used = 0;
 #endif
 #endif
-
-	ADD_CC;
 }
 
 /**
@@ -129,26 +125,22 @@ static bool get_SubdomainView(DomainView_t *dv, size_len_t idx,
 
 	if(!dv)
 	{
-		ADD_CC;
 		return false;
 	}
 
 	if(!dv->segs_used)
 	{
-		ADD_CC;
 		return false;
 	}
 
 	if(idx > dv->segs_used)
 	{
-		ADD_CC;
 		return false;
 	}
 
 	sdv->data = dv->fqd + dv->label_indexes[idx];
 	sdv->len = dv->lengths[idx];
 
-	ADD_CC;
 	return true;
 }
 
@@ -163,7 +155,6 @@ DomainViewIter_t begin_DomainView(DomainView_t *dv)
 	it.cur_seg = 0;
 	it.dv = dv;
 
-	ADD_CC;
 	return it;
 }
 
@@ -180,10 +171,8 @@ bool next_DomainView(DomainViewIter_t *it, SubdomainView_t *sdv)
 	{
 		b = get_SubdomainView(it->dv, it->cur_seg, sdv);
 		it->cur_seg += b;
-		ADD_CC;
 	}
 
-	ADD_CC;
 	return b;
 }
 
@@ -191,7 +180,6 @@ bool null_DomainView(DomainView_t const *dv)
 {
 	ASSERT(dv);
 	// check one of the pointers should be sufficient
-	ADD_CC;
 	return dv->lengths == NULL;
 }
 
@@ -203,7 +191,6 @@ static void realloc_labels(DomainView_t *dv, size_len_t count)
 	{
 		dv->label_indexes = tmpS;
 		tmpS = NULL;
-		ADD_CC;
 	}
 	else
 	{
@@ -215,7 +202,6 @@ static void realloc_labels(DomainView_t *dv, size_len_t count)
 	{
 		dv->lengths = tmp;
 		tmp = NULL;
-		ADD_CC;
 	}
 	else
 	{
@@ -225,7 +211,6 @@ static void realloc_labels(DomainView_t *dv, size_len_t count)
 #ifdef COLLECT_DIAGNOSTICS
 	dv->count_realloc++;
 #endif
-	ADD_CC;
 }
 
 /**
@@ -253,13 +238,11 @@ bool update_DomainView(DomainView_t *dv, char const *fqd, size_len_t len)
 	ASSERT(dv);
 	if(!fqd || len == 0)
 	{
-		ADD_CC;
 		return false;
 	}
 
 	if(null_DomainView(dv))
 	{
-		ADD_CC;
 		return false;
 	}
 
@@ -279,7 +262,6 @@ bool update_DomainView(DomainView_t *dv, char const *fqd, size_len_t len)
 			if(dv->segs_used >= dv->segs_alloc)
 			{
 				realloc_labels(dv, 4);
-				ADD_CC;
 			}
 			// 01234567890
 			// www.google.com
@@ -296,15 +278,12 @@ bool update_DomainView(DomainView_t *dv, char const *fqd, size_len_t len)
 				if(tmp > UCHAR_MAX)
 				{
 					ELOG_STDERR("ERROR: segment is longer than allowable in unsigned char.\n");
-					ADD_CC;
 					return false;
 				}
 				else
 				{
 					ELOG_STDERR("WARNING: segment is longer than allowable maximum.\n");
-					ADD_CC;
 				}
-				ADD_CC;
 			}
 			dv->lengths[dv->segs_used] = prev - c;
 			dv->segs_used++;
@@ -315,20 +294,16 @@ bool update_DomainView(DomainView_t *dv, char const *fqd, size_len_t len)
 			//	  p
 			c--;
 			prev = c;
-			ADD_CC;
 		}
 		else
 		{
 			c--;
-			ADD_CC;
 		}
-		ADD_CC;
 	}
 
 	if(dv->segs_used >= dv->segs_alloc)
 	{
 		realloc_labels(dv, 1);
-		ADD_CC;
 	}
 
 	dv->label_indexes[dv->segs_used] = 0;
@@ -339,7 +314,6 @@ bool update_DomainView(DomainView_t *dv, char const *fqd, size_len_t len)
 		dv->max_used = dv->segs_used;
 #endif
 
-	ADD_CC;
 	return true;
 }
 
@@ -352,7 +326,6 @@ DomainView_t parse_Domain(char const *fqd, size_len_t len)
 
 	update_DomainView(&dv, fqd, len);
 
-	ADD_CC;
 	return dv;
 }
 
@@ -367,13 +340,11 @@ static DomainViewIter_t end_DomainView(DomainView_t *dv)
 	it.dv = dv;
 	it.cur_seg = it.dv->segs_used;
 
-	ADD_CC;
 	return it;
 }
 
 static bool null_SubdomainView(SubdomainView_t const *const sdv)
 {
-	ADD_CC;
 	return sdv->data == NULL;
 }
 
@@ -388,10 +359,8 @@ static bool prev_DomainView(DomainViewIter_t *it, SubdomainView_t *sdv)
 	{
 		it->cur_seg--;
 		b = get_SubdomainView(it->dv, it->cur_seg, sdv);
-		ADD_CC;
 	}
 
-	ADD_CC;
 	return b;
 }
 
@@ -413,7 +382,6 @@ static void test_null_Domain()
 	free_DomainView(&dv);
 
 	assert(null_DomainView(&dv));
-	ADD_TCC;
 }
 
 static void test_free_Domain()
@@ -426,7 +394,6 @@ static void test_free_Domain()
 
 	// free didn't change the struct
 	assert(!memcmp(&dv_zero, &dv, sizeof(DomainView_t)));
-	ADD_TCC;
 }
 
 static void test_init_Domain()
@@ -464,7 +431,6 @@ static void test_init_Domain()
 #ifdef USE_MEMSET
 	assert(!memcmp(&dv_zero, &dv, sizeof(DomainView_t)));
 #endif
-	ADD_TCC;
 }
 
 #define ASSERT_DOMAIN_SEG(value, idx) \
@@ -487,7 +453,6 @@ static void test_parse_Domain()
 #undef ASSERT_PARSE
 
 	free_DomainView(&dv);
-	ADD_TCC;
 }
 
 #define ASSERT_UPDATE(value, ret, segments) \
@@ -536,7 +501,6 @@ static void test_DomainIter(DomainView_t *dv, size_len_t segments,
 	}
 	assert(!prev_DomainView(&end, &sdv));
 #undef ASSERT_NEXT
-	ADD_TCC;
 }
 
 static void test_update_Domain()
@@ -583,7 +547,6 @@ static void test_update_Domain()
 #undef ASSERT_SUBDV
 
 	free_DomainView(&dv);
-	ADD_TCC;
 }
 #undef ASSERT_UPDATE
 
@@ -610,7 +573,6 @@ static void test_nil_fqd()
 	assert(dv.segs_alloc >= 1);
 
 	free_DomainView(&dv);
-	ADD_TCC;
 }
 
 static void test_nil_DomainView()
@@ -625,7 +587,6 @@ static void test_nil_DomainView()
 	assert(!get_SubdomainView(&dv, 0, &sdv));
 
 	free_DomainView(&dv);
-	ADD_TCC;
 }
 
 static void test_long_label()
@@ -648,7 +609,6 @@ static void test_long_label()
 
 	free_DomainView(&dv);
 	free(long_label);
-	ADD_TCC;
 }
 
 static void test_too_long()
@@ -671,7 +631,6 @@ static void test_too_long()
 
 	free_DomainView(&dv);
 	free(too_long);
-	ADD_TCC;
 }
 
 void info_domain()
@@ -679,7 +638,6 @@ void info_domain()
 	printf("Sizeof DomainView_t: %lu\n", sizeof(DomainView_t));
 	printf("Sizeof DomainViewIter_t: %lu\n", sizeof(DomainViewIter_t));
 	printf("Sizeof SubdomainView_t: %lu\n", sizeof(SubdomainView_t));
-	ADD_TCC;
 }
 
 void test_domain()
@@ -693,6 +651,5 @@ void test_domain()
 	test_nil_DomainView();
 	test_long_label();
 	test_too_long();
-	ADD_TCC;
 }
 #endif

@@ -40,7 +40,6 @@ static DomainInfo_t* init_DomainInfo()
 	di->len = 0;
 #endif
 #endif
-	ADD_CC;
 	return di;
 }
 
@@ -51,12 +50,10 @@ void free_DomainInfo(DomainInfo_t **di)
 #if defined(BUILD_TESTS)
 		free((*di)->fqd);
 #endif
-		ADD_CC;
 	}
 	free(*di);
 
 	*di = NULL;
-	ADD_CC;
 }
 
 /**
@@ -79,7 +76,6 @@ DomainInfo_t *convert_DomainInfo(DomainView_t *dv)
 	di->context = dv->context;
 	di->linenumber = dv->linenumber;
 
-	ADD_CC;
 	return di;
 }
 
@@ -88,7 +84,6 @@ static void free_DomainTreePtr(DomainTree_t **dt)
 	free((*dt)->tld);
 	free(*dt);
 	*dt = NULL;
-	ADD_TCC;
 }
 
 /**
@@ -105,7 +100,6 @@ static void DomainInfo_deleter(DomainInfo_t **di, void *ignored)
 	UNUSED(ignored);
 	free_DomainInfo(di);
 	ASSERT(!*di);
-	ADD_TCC;
 }
 
 /**
@@ -122,7 +116,6 @@ void transfer_DomainInfo(DomainTree_t **root,
 	ASSERT(root);
 	if(*root == NULL)
 	{
-		ADD_CC;
 		return;
 	}
 
@@ -143,9 +136,7 @@ void transfer_DomainInfo(DomainTree_t **root,
 		}
 		ASSERT(!current->di);
 		free_DomainTreePtr(&current);
-		ADD_CC;
 	}
-	ADD_CC;
 
 	*root = NULL;
 }
@@ -169,7 +160,6 @@ void free_DomainTree(DomainTree_t **root)
 {
 	transfer_DomainInfo(root, DomainInfo_deleter, NULL);
 	ASSERT(!*root);
-	ADD_CC;
 }
 
 /**
@@ -182,7 +172,6 @@ static void replace_DomainInfo(DomainTree_t *entry, DomainView_t *dv)
 {
 	free_DomainInfo(&entry->di);
 	entry->di = convert_DomainInfo(dv);
-	ADD_CC;
 }
 
 static DomainTree_t *init_DomainTree(SubdomainView_t const *sdv)
@@ -197,7 +186,6 @@ static DomainTree_t *init_DomainTree(SubdomainView_t const *sdv)
 	ndt->tld = malloc(sizeof(char) * sdv->len);
 	memcpy(ndt->tld, sdv->data, sdv->len);
 
-	ADD_CC;
 	return ndt;
 }
 
@@ -254,7 +242,6 @@ static DomainTree_t* ctor_DomainTree(DomainTree_t **dt, DomainViewIter_t *it,
 		// (1) parent will be 'google'
 		// (2) parent will be 'www'
 
-		ADD_CC;
 	// (1) set sdv to 'google' in 'www.google.com'
 	// (2) set sdv to 'www' in 'www.google.com'
 	// (3) set sdv to <NULL>; end of iteration
@@ -266,7 +253,6 @@ static DomainTree_t* ctor_DomainTree(DomainTree_t **dt, DomainViewIter_t *it,
 	ASSERT(it->dv->match_strength > MATCH_NOTSET);
 	ndt->di = convert_DomainInfo(it->dv);
 
-	ADD_CC;
 	return ndt;
 }
 
@@ -285,7 +271,6 @@ static DomainTree_t* replace_if_stronger(DomainTree_t *entry, DomainView_t *dv)
 		ASSERT(entry->di);
 		if(entry->di->match_strength == MATCH_FULL)
 		{
-			ADD_CC;
 			free_DomainTree(&entry->child);
 		}
 		DEBUG_PRINTF("[%s:%d] %s replace existing entry with stronger match; inserted.\n", __FILE__, __LINE__, __FUNCTION__);
@@ -293,7 +278,6 @@ static DomainTree_t* replace_if_stronger(DomainTree_t *entry, DomainView_t *dv)
 #ifdef BUILD_TESTS
 		DEBUG_PRINTF("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
 #endif
-		ADD_CC;
 		return entry;
 	}
 	else // not strong enough to override
@@ -304,7 +288,6 @@ static DomainTree_t* replace_if_stronger(DomainTree_t *entry, DomainView_t *dv)
 		ASSERT(entry->di);
 		DEBUG_PRINTF("\tfqd=%.*s\n", (int)entry->di->len, entry->di->fqd);
 #endif
-		ADD_CC;
 	}
 
 	return NULL;
@@ -315,7 +298,6 @@ static bool leaf_DomainTree(DomainTree_t const *dt)
 	ASSERT(dt);
 	// HASH_CNT(<hh>, <obj>)
 	// even if 'child' is NULL, HASH_COUNT has defined behavior and returns 0.
-	ADD_CC;
 	return HASH_COUNT(dt->child) == 0;
 }
 
@@ -342,7 +324,6 @@ static DomainTree_t* insert_Domain(DomainTree_t **root_dt, DomainView_t *dv)
 			ASSERT(entry);
 			ASSERT(entry->di);
 			ASSERT(entry->di->match_strength > MATCH_NOTSET);
-			ADD_CC;
 			return entry;
 		}
 
@@ -353,20 +334,16 @@ static DomainTree_t* insert_Domain(DomainTree_t **root_dt, DomainView_t *dv)
 			ASSERT(entry->di->match_strength != MATCH_REGEX);
 			if(entry->di->match_strength == MATCH_FULL)
 			{
-				ADD_CC;
 				return NULL;
 			}
-			ADD_CC;
 		}
 
 		dt = &entry->child;
-		ADD_CC;
 	}
 
 	// if 'entry' is null, then 'dv' is garbage, i.e., not a domain.
 	ASSERT(entry);
 	entry = replace_if_stronger(entry, dv);
-	ADD_CC;
 	return entry;
 }
 
@@ -383,20 +360,17 @@ DomainTree_t* insert_DomainTree(DomainTree_t **dt, DomainView_t *dv)
 	if(dv->match_strength == MATCH_NOTSET)
 	{
 		ELOG_STDERR("ERROR: DomainView has uninitialized match_strength set; skip insertion.\n");
-		ADD_CC;
 		return NULL;
 	}
 
 	if(dv->match_strength == MATCH_BOGUS)
 	{
 		ELOG_STDERR("ALERT: DomainView has bogus match_strength set; skip insertion.\n");
-		ADD_CC;
 		return NULL;
 	}
 
 	DomainTree_t *entry = insert_Domain(dt, dv);
 
-	ADD_CC;
 	return entry;
 }
 
@@ -408,7 +382,6 @@ static void do_visit_DomainTree(DomainTree_t *root,
 
 	if(root == NULL)
 	{
-		ADD_CC;
 		return;
 	}
 
@@ -426,12 +399,9 @@ static void do_visit_DomainTree(DomainTree_t *root,
 			DEBUG_PRINTF("DT: Visited fqd=%.*s\n", (int)dt->di->len, dt->di->fqd);
 #endif
 			(*visitor_func)(dt->di, context);
-			ADD_CC;
 		}
-		ADD_CC;
 	}
 
-	ADD_CC;
 }
 
 void visit_DomainTree(DomainTree_t *root,
@@ -441,7 +411,6 @@ void visit_DomainTree(DomainTree_t *root,
 	ASSERT(visitor_func);
 
 	do_visit_DomainTree(root, visitor_func, context);
-	ADD_CC;
 }
 
 #ifdef BUILD_TESTS
@@ -1027,7 +996,5 @@ void test_DomainTree()
 	test_e2e_discovered();
 	test_e2e_discovered2();
 	test_insert_stronger();
-
-	ADD_TCC;
 }
 #endif

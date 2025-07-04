@@ -53,12 +53,9 @@ bool open_logfile(input_args_t *iargs)
 		else
 		{
 			iargs->errFile = iargs->outFile;
-			ADD_CC;
 			return true;
 		}
 	}
-	ADD_CC;
-
 	return false;
 }
 
@@ -74,9 +71,7 @@ void close_logfile(input_args_t *iargs)
 		fclose(iargs->outFile);
 		iargs->outFile = stdout;
 		iargs->errFile = stderr;
-		ADD_CC;
 	}
-	ADD_CC;
 }
 
 FILE *get_logFile(input_args_t *iargs)
@@ -121,11 +116,8 @@ void open_globalErrLog()
 			{
 				fprintf(stderr, "ERROR: Unable to open %s for append writing.\n", global_errLog->log_fname);
 			}
-			ADD_CC;
 		}
-		ADD_CC;
 	}
-	ADD_CC;
 }
 
 void close_globalErrLog()
@@ -135,20 +127,16 @@ void close_globalErrLog()
 	{
 		fclose(global_errLog->file);
 		global_errLog->file = NULL;
-		ADD_CC;
 	}
-	ADD_CC;
 }
 
 FILE *get_globalErrLog()
 {
 	if(global_errLog && global_errLog->log_fname && global_errLog->file)
 	{
-		ADD_CC;
 		return global_errLog->file;
 	}
 
-	ADD_CC;
 	return stderr;
 }
 
@@ -172,11 +160,8 @@ void open_globalStdLog()
 			{
 				fprintf(stderr, "ERROR: Unable to open %s for append writing.\n", global_stdLog->log_fname);
 			}
-			ADD_CC;
 		}
-		ADD_CC;
 	}
-	ADD_CC;
 }
 
 void close_globalStdLog()
@@ -186,20 +171,16 @@ void close_globalStdLog()
 	{
 		fclose(global_stdLog->file);
 		global_stdLog->file = NULL;
-		ADD_CC;
 	}
-	ADD_CC;
 }
 
 FILE *get_globalStdLog()
 {
 	if(global_stdLog && global_stdLog->log_fname && global_stdLog->file)
 	{
-		ADD_CC;
 		return global_stdLog->file;
 	}
 
-	ADD_CC;
 	return stdout;
 }
 
@@ -218,9 +199,7 @@ static void free_filenames_array(char ***filenames, size_t num_files)
 	{
 		free((*filenames)[i]);
 		(*filenames)[i] = NULL;
-		ADD_CC;
 	}
-	ADD_CC;
 }
 
 static void append_filename_array(char ***filenames, size_t *num_files,
@@ -245,20 +224,17 @@ static void append_filename_array(char ***filenames, size_t *num_files,
 	{
 		*filenames = new_files;
 		(*filenames)[*num_files - 1] = entry;
-		ADD_CC;
 	}
 	else
 	{
 		ELOG_STDERR("ERROR: Failed to realloc memory for filenames[]\n");
 		exit(EXIT_FAILURE);
 	}
-	ADD_CC;
 }
 
 static void add_filename(input_args_t *iargs, char *entry)
 {
 	append_filename_array(&iargs->filenames, &iargs->num_files, entry);
-	ADD_CC;
 }
 
 void init_input_args(input_args_t *iargs)
@@ -269,7 +245,6 @@ void init_input_args(input_args_t *iargs)
 	iargs->out_ext = ".txt";
 	iargs->outFile = stdout;
 	iargs->errFile = stderr;
-	ADD_CC;
 }
 
 void free_input_args(input_args_t *iargs)
@@ -277,14 +252,12 @@ void free_input_args(input_args_t *iargs)
 	if(iargs->dir_flag)
 	{
 		free_filenames_array(&iargs->filenames, iargs->num_files);
-		ADD_CC;
 	}
 
 	free(iargs->filenames);
 	iargs->filenames = NULL;
 
 	memset(iargs, 0, sizeof(input_args_t));
-	ADD_CC;
 }
 
 /**
@@ -293,7 +266,6 @@ void free_input_args(input_args_t *iargs)
  */
 bool silent_mode(const input_args_t *iargs)
 {
-	ADD_CC;
 	return (iargs->silent_flag && !iargs->log_flag);
 }
 
@@ -315,30 +287,25 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
 				break;
 			case 's':
 				iargs->silent_flag = true;
-				ADD_CC;
 				break;
 			case 'L':
 				iargs->log_flag = true;
 				iargs->log_fname = optarg;
-				ADD_CC;
 				break;
 			case 'E':
 				iargs->errLog_flag = true;
 				iargs->errLog_fname = optarg;
-				ADD_CC;
 				break;
 			case 'i': // # elements for initial alloc buffer
 				if(!iargs->override_buffersize)
 				{
 					iargs->override_buffersize = true;
 					iargs->initial_buffer_size = atoi(optarg);
-					ADD_CC;
 				}
 				else
 				{
 					ELOG_IFARGS(iargs, "Option -i (override initial DomainInfo buffer size) is expected at most once.\n");
 					errorFlag++;
-					ADD_CC;
 				}
 				break;
 			case 'r': // # elements for realloc buffers
@@ -346,13 +313,11 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
 				{
 					iargs->override_reallocsize = true;
 					iargs->realloc_buffer_size = atoi(optarg);
-					ADD_CC;
 				}
 				else
 				{
 					ELOG_IFARGS(iargs, "Option -r (override realloc DomainInfo buffer size) is expected at most once.\n");
 					errorFlag++;
-					ADD_CC;
 				}
 				break;
 			case 't':
@@ -360,30 +325,25 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
 				ELOG_IFARGS(iargs, "NOTICE: option -t (run built-in unit tests) will be ignored; binary was built without unit tests.\n");
 #else
 				iargs->runtests = true;
-				ADD_TCC;
 #endif
 				break;
 			case 'd':
 				iargs->dir_flag = true;
 				iargs->directory = optarg;
-				ADD_CC;
 				break;
 			case 'x':
 				// default to ".fat"
 				iargs->inp_ext_flag = true;
 				iargs->inp_ext = optarg;
-				ADD_CC;
 				break;
 			case 'o':
 				// default to ".txt"
 				iargs->out_ext_flag = true;
 				iargs->out_ext = optarg;
-				ADD_CC;
 				break;
 			case ':':
 				ELOG_IFARGS(iargs, "Option -%c requires an operand\n", optopt);
 				errorFlag++;
-				ADD_CC;
 				break;
 			case '?':
 			default:
@@ -399,14 +359,12 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
 						"[file1, file2, ...] "
 						"\n", argv[0]);
 				errorFlag++;
-				ADD_CC;
 				break;
 		}
 	}
 
 	if(errorFlag)
 	{
-		ADD_CC;
 		return false;
 	}
 
@@ -415,7 +373,6 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
 		if(!open_logfile(iargs))
 		{
 			errorFlag++;
-			ADD_CC;
 			return false;
 		}
 		close_logfile(iargs);
@@ -429,7 +386,6 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
 				errorFlag++;
 				return false;
 			}
-			ADD_CC;
 		}
 		else
 		{
@@ -437,7 +393,6 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
 			errorFlag++;
 			return false;
 		}
-		ADD_CC;
 
 		global_stdLog = calloc(1, sizeof(globalLog_t));
 		global_stdLog->log_fname = iargs->log_fname;
@@ -452,7 +407,6 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
 #ifdef BUILD_TESTS
 	if(iargs->runtests)
 	{
-		ADD_TCC;
 		return true;
 	}
 #endif
@@ -461,7 +415,6 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
 	{
 		ELOG_IFARGS(iargs, "ERROR: Provide a directory with option -d <dir> OR at least one file name.\n");
 		errorFlag++;
-		ADD_CC;
 		return false;
 	}
 
@@ -469,7 +422,6 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
 	{
 		ELOG_IFARGS(iargs, "ERROR: Option -d <dir> and optional file names [file 1, file2, ...] are mutually exclusive.\n");
 		errorFlag++;
-		ADD_CC;
 		return false;
 	}
 
@@ -477,7 +429,6 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
 	{
 		ELOG_IFARGS(iargs, "ERROR: Input file extension must begin with a period.\n");
 		errorFlag++;
-		ADD_CC;
 		return false;
 	}
 
@@ -485,11 +436,9 @@ static bool do_parse_input_args(int argc, char * const* argv, input_args_t *iarg
 	{
 		ELOG_IFARGS(iargs, "ERROR: Output file extension must begin with a period.\n");
 		errorFlag++;
-		ADD_CC;
 		return false;
 	}
 
-	ADD_CC;
 	return true;
 }
 
@@ -497,7 +446,6 @@ static void log_action(const char *fname, input_args_t *iargs)
 {
 	if(silent_mode(iargs))
 	{
-		ADD_CC;
 		return;
 	}
 
@@ -505,10 +453,8 @@ static void log_action(const char *fname, input_args_t *iargs)
 	if(tmp)
 	{
 		LOG_IFARGS(iargs, "   READ: %s\n  WRITE: %s\n", fname, tmp);
-		ADD_CC;
 	}
 	free(tmp);
-	ADD_CC;
 }
 
 static int sort_filenames(void const *a, void const *b)
@@ -531,16 +477,13 @@ static bool read_dir_filenames(input_args_t *iargs)
 		{
 			ELOG_IFARGS(iargs, "ERROR: Expected '%s' to be a directory\n",
 					iargs->directory);
-			ADD_CC;
 			return false;
 		}
-		ADD_CC;
 	}
 	else
 	{
 		ELOG_IFARGS(iargs, "ERROR: Unable to stat directory '%s'\n",
 				iargs->directory);
-		ADD_CC;
 		return false;
 	}
 
@@ -550,7 +493,6 @@ static bool read_dir_filenames(input_args_t *iargs)
 	{
 		ELOG_IFARGS(iargs, "ERROR: Unable to open directory '%s'\n",
 				iargs->directory);
-		//ADD_CC; // unlikely
 		return false;
 	}
 
@@ -571,7 +513,6 @@ static bool read_dir_filenames(input_args_t *iargs)
 		if(extra)
 		{
 			tmp[len_dir] = PATH_SEP_CHAR;
-			ADD_CC;
 		}
 
 		strcpy(tmp + len_dir + extra, direntry->d_name);
@@ -589,30 +530,25 @@ static bool read_dir_filenames(input_args_t *iargs)
 					tmp = NULL;
 
 					log_action(direntry->d_name, iargs);
-					ADD_CC;
 				}
 				else if(!silent_mode(iargs) && strcmp(period, iargs->out_ext) == 0)
 				{
 					LOG_IFARGS(iargs, "Found regular file with matching output extension: %s\n"
 									  "WARNING: will overwrite %s\n", tmp, direntry->d_name);
-					ADD_CC;
 				}
 			}
 		}
 		free(tmp);
-		ADD_CC;
 	}
 
 	if(closedir(dir) != 0)
 	{
 		ELOG_IFARGS(iargs, "WARNING: Unable to close directory '%s'.\n",
 				iargs->directory);
-		//ADD_CC; // unlikely
 	}
 
 	qsort(iargs->filenames, iargs->num_files, sizeof(char*), sort_filenames);
 
-	ADD_CC;
 	return true;
 }
 
@@ -632,7 +568,6 @@ static bool read_argv_filenames(int argc, char *const *argv, input_args_t *iargs
 			if(!S_ISREG(s.st_mode))
 			{
 				ELOG_IFARGS(iargs, "ERROR: Expected a file: %s\n", argv[c]);
-				ADD_CC;
 				return false;
 			}
 		}
@@ -640,29 +575,24 @@ static bool read_argv_filenames(int argc, char *const *argv, input_args_t *iargs
 		{
 			ELOG_IFARGS(iargs, "ERROR: Unable to stat input file name %s\n",
 					argv[c]);
-			ADD_CC;
 			return false;
 		}
 
 		log_action(argv[c], iargs);
 
 		add_filename(iargs, argv[c]);
-		ADD_CC;
 	}
 
 	if(optind < argc)
 	{
 		iargs->num_files = argc - optind;
-		ADD_CC;
 	}
 	else
 	{
 		ELOG_IFARGS(iargs, "ERROR: Missing arguments.\n");
-		//ADD_CC; // unlikely
 		return false;
 	}
 
-	ADD_CC;
 	return true;
 }
 
@@ -673,14 +603,12 @@ bool parse_input_args(int argc, char *const * argv, input_args_t *iargs)
 {
 	if(!do_parse_input_args(argc, argv, iargs))
 	{
-		ADD_CC;
 		return false;
 	}
 
 #ifdef BUILD_TESTS
 	if(iargs->runtests)
 	{
-		ADD_TCC;
 		return true;
 	}
 #endif
@@ -688,12 +616,10 @@ bool parse_input_args(int argc, char *const * argv, input_args_t *iargs)
 	if(iargs->dir_flag)
 	{
 		ASSERT(argc == optind);
-		ADD_CC;
 		return read_dir_filenames(iargs);
 	}
 	else
 	{
-		ADD_CC;
 		return read_argv_filenames(argc, argv, iargs);
 	}
 }
@@ -714,7 +640,6 @@ static void check_initial_input_args(input_args_t *args)
 	assert(args->num_files == 0);
 	assert(args->outFile == stdout);
 	assert(args->errFile = stderr);
-	ADD_TCC;
 }
 
 static void test_init_input_args()
@@ -723,7 +648,6 @@ static void test_init_input_args()
 	init_input_args(&args);
 
 	check_initial_input_args(&args);
-	ADD_TCC;
 }
 
 static void test_free_input_args()
@@ -742,7 +666,6 @@ static void test_free_input_args()
 
 	init_input_args(&args);
 	check_initial_input_args(&args);
-	ADD_TCC;
 }
 
 static void test_silent_mode()
@@ -764,7 +687,6 @@ static void test_silent_mode()
 	assert(!silent_mode(&args));
 	args.log_flag = true;
 	assert(!silent_mode(&args));
-	ADD_TCC;
 }
 
 #define TC_DPIA(numargs, argsin, argsout, expect_ret) do { \
@@ -876,7 +798,6 @@ static void test_do_parse_input_args()
 	assert(strcmp(args.out_ext, "output") == 0);
 
 	free_input_args(&args);
-	ADD_TCC;
 }
 
 #define TC_RDIR(numargs, argsin, argsout, expect_ret, numfiles) do { \
@@ -918,7 +839,6 @@ static void test_read_dir()
 	TC_RDIR(5, dirarg7, args, true, 1);
 
 	free_input_args(&args);
-	ADD_TCC;
 }
 
 static void test_duped_args()
@@ -936,7 +856,6 @@ static void test_duped_args()
 	TC_DPIA(11, arg3, args, false);
 
 	free_input_args(&args);
-	ADD_TCC;
 }
 
 static void test_log_args()
@@ -955,7 +874,6 @@ static void test_log_args()
 	assert(strcmp(args.log_fname, "./tests/") == 0);
 
 	free_input_args(&args);
-	ADD_TCC;
 }
 
 #define TC_RFILE(numargs, argsin, argsout, expect_ret, numfiles) do { \
@@ -987,7 +905,6 @@ static void test_read_argvfiles()
 	assert(strcmp(args.filenames[1], "./tests/001_inputs/EasyList_Chinese.txt") == 0);
 
 	free_input_args(&args);
-	ADD_TCC;
 }
 
 #define TC_PI(numargs, argsin, argsout, expect_ret) do { \
@@ -1013,7 +930,6 @@ static void test_parse_input()
 	TC_PI(7, arg3, args, false);
 
 	free_input_args(&args);
-	ADD_TCC;
 }
 
 static void test_errLog()
@@ -1064,7 +980,6 @@ static void test_errLog()
 	free_input_args(&args);
 	free(global_errLog);
 	global_errLog = NULL;
-	ADD_TCC;
 }
 
 void test_input_args()
@@ -1081,6 +996,5 @@ void test_input_args()
 	test_read_argvfiles();
 	test_parse_input();
 	printf("OK.\n");
-	ADD_TCC;
 }
 #endif

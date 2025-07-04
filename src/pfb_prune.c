@@ -40,7 +40,6 @@ void set_DomainInfo_array_size(int v)
 	if(v > 0)
 	{
 		INITIAL_ARRAY_DOMAIN_INFO = v;
-		ADD_CC;
 	}
 	else
 	{
@@ -53,7 +52,6 @@ void set_realloc_DomainInfo_size(int v)
 	if(v > 0)
 	{
 		REALLOC_ARRAY_DOMAIN_INFO = v;
-		ADD_CC;
 	}
 	else
 	{
@@ -85,10 +83,8 @@ char* pfb_strdup(const char *in, size_len_t in_size)
 	{
 		memcpy(out_str, in, in_size);
 		out_str[in_size] = '\0';
-		ADD_CC;
 	}
 
-	ADD_CC;
 	return out_str;
 }
 
@@ -97,14 +93,12 @@ char* outputfilename(const char *input, const char *ext)
 	if(!input || !ext)
 	{
 		ELOG_STDERR("Input filename and extension must be non-nil\n");
-		ADD_CC;
 		return NULL;
 	}
 
 	if(!*input || !*ext)
 	{
 		ELOG_STDERR("Input filename and extension must be non-empty\n");
-		ADD_CC;
 		return NULL;
 	}
 
@@ -114,9 +108,7 @@ char* outputfilename(const char *input, const char *ext)
 		if(*walker == '.')
 		{
 			period = walker;
-			ADD_CC;
 		}
-		ADD_CC;
 	}
 
 	char *output = NULL;
@@ -125,7 +117,6 @@ char* outputfilename(const char *input, const char *ext)
 	{
 		// walker will be at the nil terminator
 		period = walker;
-		ADD_CC;
 	}
 
 	size_t len = period - input + strlen(ext);
@@ -134,7 +125,6 @@ char* outputfilename(const char *input, const char *ext)
 	memcpy(output, input, period - input);
 	memcpy(output + (period - input), ext, strlen(ext));
 	*(output + len) = '\0'; // line 83
-	ADD_CC;
 
 	return output;
 }
@@ -160,18 +150,15 @@ static MatchStrength_t get_csvline_match(CsvLineView_t *lv)
 			ELOG_STDERR("WARNING: line has bogus unsupported value in column 7: %.*s\n",
 					(int)cv_6.len, cv_6.data);
 			// flag line bogus to skip further processing
-			ADD_CC;
 			return MATCH_BOGUS;
 		}
 		else
 		{
-			ADD_CC;
 			return cv_6.data[0] - '0';
 		}
 	}
 	else
 	{
-		ADD_CC;
 		return MATCH_WEAK;
 	}
 }
@@ -203,7 +190,6 @@ static void pfb_insert(PortLineData_t const *const pld, pfb_context_t *pfbc,
 		// add the line information to list for direct carry over to the final
 		// list.
 		insert_carry_over(&pfbc->co, pld->linenumber);
-		ADD_CC;
 	}
 	else
 	{
@@ -220,16 +206,13 @@ static void pfb_insert(PortLineData_t const *const pld, pfb_context_t *pfbc,
 			dv->linenumber = pld->linenumber;
 
 			insert_DomainTree(pfbc->dt, dv);
-			ADD_CC;
 		}
 	}
-	ADD_CC;
 }
 
 size_t pfb_len_contexts(pfb_contexts_t *cs)
 {
 	ASSERT(cs);
-	ADD_CC;
 	return (cs->end_context - cs->begin_context);
 }
 
@@ -249,7 +232,6 @@ pfb_contexts_t pfb_init_contexts(size_t alloc_contexts, const char *out_ext,
 		cs.begin_context = NULL;
 		cs.end_context = NULL;
 #endif
-		ADD_CC;
 		return cs;
 	}
 
@@ -273,10 +255,8 @@ pfb_contexts_t pfb_init_contexts(size_t alloc_contexts, const char *out_ext,
 		c->in_fname = pfb_strdup(*argv, strlen(*argv));
 		c->out_fname = outputfilename(c->in_fname, out_ext);
 		init_carry_over(&c->co);
-		ADD_CC;
 	}
 
-	ADD_CC;
 	return cs;
 }
 
@@ -320,7 +300,6 @@ void pfb_open_context(pfb_context_t *c, bool append_output)
 		return;
 	}
 
-	ADD_CC;
 }
 
 void pfb_flush_out_context(pfb_context_t *c)
@@ -334,7 +313,6 @@ void pfb_flush_out_context(pfb_context_t *c)
 	}
 
 	fflush(c->out_file);
-	ADD_CC;
 }
 
 void pfb_close_context(pfb_context_t *c)
@@ -345,19 +323,15 @@ void pfb_close_context(pfb_context_t *c)
 	{
 		fclose(c->in_file);
 		c->in_file = NULL;
-		ADD_CC;
 	}
 
 	if(c->out_file)
 	{
 		fclose(c->out_file);
 		c->out_file = NULL;
-		ADD_CC;
 	}
 
 	//free_DomainView(&c->dv);
-
-	ADD_CC;
 }
 
 /**
@@ -381,7 +355,6 @@ void pfb_free_contexts(pfb_contexts_t *cs)
 
 			free_DomainTree(&cs->begin_context->dt[0]);
 			cs->begin_context->dt[0] = NULL;
-			ADD_CC;
 		}
 		free(cs->begin_context->dt);
 		cs->begin_context->dt = NULL;
@@ -392,15 +365,12 @@ void pfb_free_contexts(pfb_contexts_t *cs)
 			free(c->in_fname);
 			free(c->out_fname);
 			free_carry_over(&c->co);
-			ADD_CC;
 		}
 
 		free(cs->begin_context);
-		ADD_CC;
 	}
 	cs->begin_context = NULL;
 	cs->end_context = NULL;
-	ADD_CC;
 }
 
 /**
@@ -433,13 +403,11 @@ void pfb_read_csv(pfb_contexts_t *cs)
 		pfb_open_context(c, false);
 		read_pfb_csv(c, pfb_insert, &pc);
 		pfb_close_context(c);
-		ADD_CC;
 	}
 
 	free_CsvLineView(&lv);
 	free_DomainView(&dv);
 
-	ADD_CC;
 }
 
 void init_ArrayDomainInfo(ArrayDomainInfo_t *array_di, const size_t alloc_contexts)
@@ -497,9 +465,7 @@ void init_ArrayDomainInfo(ArrayDomainInfo_t *array_di, const size_t alloc_contex
 #ifdef COLLECT_DIAGNOSTICS
 		array_di->cd[i].count_realloc_linenumbers = 0;
 #endif
-		ADD_CC;
 	}
-	ADD_CC;
 }
 
 void free_ArrayDomainInfo(ArrayDomainInfo_t *array_di)
@@ -519,7 +485,6 @@ void free_ArrayDomainInfo(ArrayDomainInfo_t *array_di)
 		LOG_DIAG_CONT("Input file: %s\n\n",
 				array_di->begin_pfb_context[i].in_fname);
 #endif
-		ADD_CC;
 	}
 
 	free(array_di->cd);
@@ -531,7 +496,6 @@ void free_ArrayDomainInfo(ArrayDomainInfo_t *array_di)
 	array_di->len_cd = 0;
 	array_di->begin_pfb_context = NULL;
 #endif
-	ADD_CC;
 }
 
 static void resize_ContextLinenumbers(ContextDomain_t *cd, size_t count)
@@ -547,7 +511,6 @@ static void resize_ContextLinenumbers(ContextDomain_t *cd, size_t count)
 	{
 		cd->linenumbers = tmp;
 		tmp = NULL;
-		ADD_CC_SINGLE;
 	}
 	else
 	{
@@ -556,7 +519,6 @@ static void resize_ContextLinenumbers(ContextDomain_t *cd, size_t count)
 		ELOG_STDERR("ERROR: failed to realloc linenumbers array\n");
 		exit(EXIT_FAILURE);
 	}
-	ADD_CC;
 }
 
 static void transfer_carry_over(ContextDomain_t *cd, pfb_context_t *pfbc)
@@ -569,13 +531,11 @@ static void transfer_carry_over(ContextDomain_t *cd, pfb_context_t *pfbc)
 	{
 		ASSERT(count > 0);
 		resize_ContextLinenumbers(cd, (cd->next_idx + count - cd->alloc_linenumbers) );
-		ADD_CC;
 	}
 
 	transfer_linenumbers(cd->linenumbers + cd->next_idx, &pfbc->co);
 	cd->next_idx += count;
 
-	ADD_CC;
 }
 
 /**
@@ -606,7 +566,6 @@ static void collect_DomainInfo(DomainInfo_t **di, void *context)
 	{
 		ASSERT(cd->next_idx < cd->alloc_linenumbers + REALLOC_ARRAY_DOMAIN_INFO);
 		resize_ContextLinenumbers(cd, REALLOC_ARRAY_DOMAIN_INFO);
-		ADD_CC;
 	}
 
 	// steal the DomainInfo from the DomainTree.
@@ -621,12 +580,10 @@ static void collect_DomainInfo(DomainInfo_t **di, void *context)
 #endif
 
 	ASSERT(*di == NULL);
-	ADD_CC;
 }
 
 int sort_LineNumbers(void const *a, void const *b)
 {
-	ADD_CC_SINGLE;
 	// no line numbers in the 'used' section should be zero
 	ASSERT(*(linenumber_t*)a != 0);
 	ASSERT(*(linenumber_t*)b != 0);
@@ -699,9 +656,7 @@ void pfb_consolidate(DomainTree_t **root_dt, ArrayDomainInfo_t *array_di)
 			DEBUG_PRINTF("\t%d\n", array_di->cd[i].linenumbers[l]);
 		}
 #endif
-		ADD_CC;
 	}
-	ADD_CC;
 }
 
 /**
@@ -732,7 +687,6 @@ void pfb_write_csv(pfb_contexts_t *cs, ArrayDomainInfo_t *array_di,
 	if(use_shared_buffer)
 	{
 		shared_buffer = malloc(sizeof(char) * default_buffer_len());
-		ADD_CC;
 	}
 
 	CsvLineView_t lv;
@@ -760,10 +714,8 @@ void pfb_write_csv(pfb_contexts_t *cs, ArrayDomainInfo_t *array_di,
 		{
 			read_pfb_line(c, &nlc.next_linenumber, shared_buffer,
 					default_buffer_len(), write_pfb_csv_callback, &nlc);
-			ADD_CC;
 		}
 		pfb_close_context(c);
-		ADD_CC;
 	}
 
 	free_CsvLineView(&lv);
@@ -771,10 +723,8 @@ void pfb_write_csv(pfb_contexts_t *cs, ArrayDomainInfo_t *array_di,
 	if(use_shared_buffer)
 	{
 		free(shared_buffer);
-		ADD_CC;
 	}
 
-	ADD_CC;
 }
 
 #ifdef BUILD_TESTS
@@ -787,7 +737,6 @@ static void test_pfb_free_contexts()
 	pfb_free_contexts(&pfbcs);
 	// verify free did not change anything
 	assert(!memcmp(&pfbcs, &pfbcs_zero, sizeof(pfb_contexts_t)));
-	ADD_TCC;
 }
 
 static void test_pfb_close_context()
@@ -806,11 +755,9 @@ static void test_pfb_close_context()
 	for(pfb_context_t *c = pfbcs.begin_context; c != pfbcs.end_context; c++, ++argi)
 	{
 		pfb_close_context(c);
-		ADD_TCC;
 	}
 
 	pfb_free_contexts(&pfbcs);
-	ADD_TCC;
 }
 
 static void test_pfb_init_contexts()
@@ -860,7 +807,6 @@ static void test_pfb_init_contexts()
 
 	pfb_free_contexts(&pfbcs);
 
-	ADD_TCC;
 }
 
 static void test_pfb_len_contexts()
@@ -887,7 +833,6 @@ static void test_pfb_len_contexts()
 	assert(pfb_len_contexts(&pfbcs) == 3);
 	pfb_free_contexts(&pfbcs);
 
-	ADD_TCC;
 }
 
 #define ASSERT_OPEN_CONTEXT_IDX(idx) do { \
@@ -972,7 +917,6 @@ static void test_pfb_open_context()
 	}
 
 	pfb_free_contexts(&pfbcs);
-	ADD_TCC;
 }
 
 void test_pfb_flush_context()
@@ -997,7 +941,6 @@ void test_pfb_flush_context()
 	pfb_flush_out_context(c);
 
 	pfb_free_contexts(&pfbcs);
-	ADD_TCC;
 }
 
 static void test_free_ArrayDi()
@@ -1009,7 +952,6 @@ static void test_free_ArrayDi()
 	free_ArrayDomainInfo(&array_di);
 
 	assert(!memcmp(&array_di, &array_di_zero, sizeof(ArrayDomainInfo_t)));
-	ADD_TCC;
 }
 
 static void test_init_ArrayDi()
@@ -1034,7 +976,6 @@ static void test_init_ArrayDi()
 	assert(!array_di.len_cd);
 	assert(!array_di.begin_pfb_context);
 
-	ADD_TCC;
 }
 
 static void test_init_ArrayDi_size()
@@ -1051,7 +992,6 @@ static void test_init_ArrayDi_size()
 	assert(array_di.len_cd == 3);
 
 	free_ArrayDomainInfo(&array_di);
-	ADD_TCC;
 }
 
 #define SIZEOF(arr) (sizeof(arr) / sizeof(*arr))
@@ -1496,7 +1436,6 @@ static void test_outputfilename()
 	assert(!memcmp("filename.txt..wat", dup, 17));
 	free(dup);
 
-	ADD_TCC;
 }
 
 /**
@@ -1505,7 +1444,6 @@ static void test_outputfilename()
  */
 static void test_write_pfb_csv()
 {
-	ADD_TCC;
 }
 
 void info_pfb_prune()
@@ -1514,7 +1452,6 @@ void info_pfb_prune()
 	printf("Sizeof pfb_contexts_t: %lu\n", sizeof(pfb_contexts_t));
 	printf("Sizeof ContextDomain_t: %lu\n", sizeof(ContextDomain_t));
 	printf("Sizeof ArrayDomainInfo_t: %lu\n", sizeof(ArrayDomainInfo_t));
-	ADD_TCC;
 }
 
 static void test_pfb_insert()
@@ -1559,7 +1496,6 @@ static void test_pfb_insert()
 
 	assert(read == 0);
 
-	ADD_TCC;
 }
 
 static void test_pfb_insert_0()
@@ -1595,7 +1531,6 @@ static void test_pfb_insert_0()
 	free_CsvLineView(&lv_context);
 	free_DomainView(&dv_context);
 	pfb_free_contexts(&pfbc);
-	ADD_TCC;
 
 	char *buffer = malloc(sizeof(char) * 100);
 	FILE *check_output = fopen("tests/unit_pfb_prune/FileInput_1.work", "rb");
@@ -1639,7 +1574,6 @@ static void test_pfb_insert_1()
 	free_CsvLineView(&lv_context);
 	free_DomainView(&dv_context);
 	pfb_free_contexts(&pfbc);
-	ADD_TCC;
 
 	char *buffer = malloc(sizeof(char) * 100);
 	FILE *check_output = fopen("tests/unit_pfb_prune/FileInput_1.work", "rb");
@@ -1684,7 +1618,6 @@ static void test_pfb_insert_2()
 	free_CsvLineView(&lv_context);
 	free_DomainView(&dv_context);
 	pfb_free_contexts(&pfbc);
-	ADD_TCC;
 
 	char *buffer = malloc(sizeof(char) * 100);
 	FILE *check_output = fopen("tests/unit_pfb_prune/FileInput_1.work", "rb");
@@ -1730,7 +1663,6 @@ static void test_pfb_insert_fewcols()
 	free_CsvLineView(&lv_context);
 	free_DomainView(&dv_context);
 	pfb_free_contexts(&pfbc);
-	ADD_TCC;
 
 	char *buffer = malloc(sizeof(char) * 100);
 	FILE *check_output = fopen("tests/unit_pfb_prune/FileInput_1.work", "rb");
@@ -1790,6 +1722,5 @@ void test_pfb_prune()
 	test_pfb_insert_1();
 	test_pfb_insert_2();
 	test_pfb_insert_fewcols();
-	ADD_TCC;
 }
 #endif

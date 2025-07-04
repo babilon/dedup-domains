@@ -18,7 +18,6 @@ static linenumber_t alloc_carry_over(carry_over_t *co)
 	{
 		co->linenumbers = tmp;
 		co->linenumbers[0] = count;
-		ADD_CC;
 	}
 	else
 	{
@@ -26,7 +25,6 @@ static linenumber_t alloc_carry_over(carry_over_t *co)
 		exit(EXIT_FAILURE);
 	}
 
-	ADD_CC;
 	return co->linenumbers[0];
 }
 
@@ -38,7 +36,6 @@ void init_carry_over(carry_over_t *co)
 {
 	ASSERT(co);
 	co->linenumbers = NULL;
-	ADD_CC;
 }
 
 /**
@@ -49,7 +46,6 @@ void free_carry_over(carry_over_t *co)
 	ASSERT(co);
 	free(co->linenumbers);
 	co->linenumbers = NULL;
-	ADD_CC;
 }
 
 /**
@@ -65,7 +61,6 @@ void transfer_linenumbers(linenumber_t *dest_linenumbers, carry_over_t *co)
 	if(count == 0)
 	{
 		// gracefully handle a bogus request
-		ADD_CC;
 		return;
 	}
 
@@ -73,7 +68,6 @@ void transfer_linenumbers(linenumber_t *dest_linenumbers, carry_over_t *co)
 			sizeof(linenumber_t) * len_carry_over(co));
 
 	free_carry_over(co);
-	ADD_CC;
 }
 
 /**
@@ -85,11 +79,9 @@ linenumber_t len_carry_over(carry_over_t *co)
 	ASSERT(co);
 	if(co->linenumbers)
 	{
-		ADD_CC;
 		return co->linenumbers[0];
 	}
 
-	ADD_CC;
 	return 0;
 }
 
@@ -110,7 +102,6 @@ void insert_carry_over(carry_over_t *co, linenumber_t ln)
 	ASSERT(co->linenumbers);
 	ASSERT(index <= co->linenumbers[0]);
 	co->linenumbers[index] = ln;
-	ADD_CC;
 }
 
 #ifdef BUILD_TESTS
@@ -133,8 +124,6 @@ static void test_init_carry_over()
 
 	// legal to call free on a free'd carry_over_t
 	free_carry_over(&co);
-
-	ADD_TCC;
 }
 
 static void test_len_carry_over()
@@ -150,8 +139,6 @@ static void test_len_carry_over()
 	free_carry_over(&co);
 
 	assert(0 == len_carry_over(&co));
-
-	ADD_TCC;
 }
 
 static void test_insert_carry_over()
@@ -175,7 +162,6 @@ static void test_insert_carry_over()
 	free_carry_over(&co);
 
 	assert(0 == len_carry_over(&co));
-	ADD_TCC;
 }
 
 void test_transfer()
@@ -204,7 +190,6 @@ void test_transfer()
 	}
 
 	free(xfered);
-	ADD_TCC;
 }
 
 void test_carry_over()
@@ -213,7 +198,5 @@ void test_carry_over()
 	test_len_carry_over();
 	test_insert_carry_over();
 	test_transfer();
-
-	ADD_TCC;
 }
 #endif

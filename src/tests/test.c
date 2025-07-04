@@ -44,8 +44,6 @@ static void test_end2end()
 							"tests/unit_pfb_prune/E2ETestInput_3.txt"};
 
 	do_test_end2end(3, argv_i);
-
-	ADD_TCC;
 }
 
 /**
@@ -57,8 +55,6 @@ static void test_end2end_empty()
 							"tests/unit_pfb_prune/E2ETest_Empty.txt"};
 
 	do_test_end2end(2, argv_i);
-
-	ADD_TCC;
 }
 
 /**
@@ -86,8 +82,6 @@ static void test_carry_over_end2end()
 	};
 
 	do_test_end2end(6, argv_i);
-
-	ADD_TCC;
 }
 
 static void do_test_end2end(const int argc, char *const *argv_i)
@@ -152,8 +146,6 @@ static void do_test_end2end(const int argc, char *const *argv_i)
 	assert(!contexts.begin_context);
 	assert(!contexts.end_context);
 	assert(!array_di.begin_pfb_context);
-
-	ADD_TCC;
 }
 
 void run_tests()
@@ -177,8 +169,4 @@ void run_tests()
 	info_DomainTree();
 	info_pfb_prune();
 	printf("OK.\n");
-
-	// code coverage
-	print_lineshit();
-
 }

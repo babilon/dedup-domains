@@ -27,7 +27,6 @@
 #include <stdbool.h>
 #include <limits.h>
 #include <assert.h>
-#include "codecoverage.h"
 #include "logdiagnostics.h"
 
 #define UNUSED(x) (void)(x)

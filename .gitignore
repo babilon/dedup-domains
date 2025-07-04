@@ -5,6 +5,9 @@ tests/test_*
 *.gch
 *.nogit
 *.nogit.*
+*.gcno
+*.gcda
 .tags
+/lcov-output/
 tests/unit_pfb_prune/*.work
 tests/unit_pfb_prune/*.bench

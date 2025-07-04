@@ -44,11 +44,9 @@ CsvColView_t get_CsvColView(CsvLineView_t const *lv, size_len_t idx)
 
 	if(cv.len > 0)
 	{
-		ADD_CC;
 		cv.data = lv->data[idx];
 	}
 
-	ADD_CC;
 	return cv;
 }
 
@@ -59,7 +57,6 @@ bool null_CsvLineView(CsvLineView_t const *lv)
 {
 	ASSERT(lv);
 
-	ADD_CC;
 	return !lv->data;
 }
 
@@ -101,7 +98,6 @@ void free_CsvLineView(CsvLineView_t *lv)
 	lv->max_used = 0;
 #endif
 #endif
-	ADD_CC;
 }
 
 /**
@@ -138,7 +134,6 @@ void init_CsvLineView(CsvLineView_t *lv)
 	{
 		exit(EXIT_FAILURE);
 	}
-	ADD_CC;
 }
 
 /**
@@ -163,7 +158,6 @@ static void set_CsvLineView(CsvLineView_t *const lv, char const *begin, char con
 		{
 			lv->data = tmp;
 			tmp = NULL;
-			ADD_CC;
 		}
 		else
 		{
@@ -176,7 +170,6 @@ static void set_CsvLineView(CsvLineView_t *const lv, char const *begin, char con
 		{
 			lv->lengths = tmpS;
 			tmp = NULL;
-			ADD_CC;
 		}
 		else
 		{
@@ -186,7 +179,6 @@ static void set_CsvLineView(CsvLineView_t *const lv, char const *begin, char con
 #ifdef COLLECT_DIAGNOSTICS
 		lv->count_reallocs++;
 #endif
-		ADD_CC;
 	}
 
 	lv->data[lv->cols_used] = begin;
@@ -196,8 +188,6 @@ static void set_CsvLineView(CsvLineView_t *const lv, char const *begin, char con
 	if(lv->cols_used > lv->max_used)
 		lv->max_used = lv->cols_used;
 #endif
-
-	ADD_CC;
 }
 
 /**
@@ -216,7 +206,6 @@ bool update_CsvLineView(CsvLineView_t *lv, char const *input_line)
 
 	if(input_line == NULL || *input_line == '\0')
 	{
-		ADD_CC;
 		return false;
 	}
 
@@ -232,19 +221,15 @@ bool update_CsvLineView(CsvLineView_t *lv, char const *input_line)
 
 			c++;
 			prev = c;
-			ADD_CC;
 		}
 		else
 		{
-			ADD_CC;
 			c++;
 		}
-		ADD_CC;
 	}
 
 	set_CsvLineView(lv, prev, c);
 
-	ADD_CC;
 	return true;
 }
 
@@ -260,7 +245,6 @@ static CsvLineView_t parse_CsvLine(char const *input_line)
 
 	update_CsvLineView(&lv, input_line);
 
-	ADD_CC;
 	return lv;
 }
 
