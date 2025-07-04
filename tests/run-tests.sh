@@ -4,18 +4,18 @@ echo "Clear test artifacts"
 
 # cwd is 'tests/'
 
-/usr/bin/rm -rf ./test_standard_out; /usr/bin/mkdir ./test_standard_out
-/usr/bin/rm -rf ./test_standard_sorted; /usr/bin/mkdir ./test_standard_sorted
+\rm -rf ./test_standard_out; \mkdir ./test_standard_out
+\rm -rf ./test_standard_sorted; \mkdir ./test_standard_sorted
 
-/usr/bin/rm -rf ./test_pointer_out; /usr/bin/mkdir ./test_pointer_out
-/usr/bin/rm -rf ./test_pointer_sorted; /usr/bin/mkdir ./test_pointer_sorted
+\rm -rf ./test_pointer_out; \mkdir ./test_pointer_out
+\rm -rf ./test_pointer_sorted; \mkdir ./test_pointer_sorted
 
 echo -e "\nRun prune with standard method"
-time /usr/bin/python3 ../pfb_dnsbl_prune.py ./001_inputs .fat .pruned --method standard
+\time \python3 ../pfb_dnsbl_prune.py ./001_inputs .fat .pruned --method standard
 echo "Compare standard output to benchmark:"
-/usr/bin/mv ./001_inputs/*.pruned ./test_standard_out/
-/usr/bin/find ./test_standard_out -type f -name '*.pruned' | /usr/bin/rename 's/\.pruned$/.txt/'
-/usr/bin/diff -rq ./001_bench_standard/ ./test_standard_out/
+\mv ./001_inputs/*.pruned ./test_standard_out/
+\find ./test_standard_out -type f -name '*.pruned' | \rename 's/\.pruned$/.txt/'
+\diff -rq ./001_bench_standard/ ./test_standard_out/
 ret=$?
 if [[ $ret -eq 0 ]]; then
     echo "001 standard: zero diffences"
@@ -25,11 +25,11 @@ else
 fi
 
 echo -e "\nRun prune with pointer method"
-time /usr/bin/python3 ../pfb_dnsbl_prune.py ./001_inputs .fat .pruned --method pointer
+\time \python3 ../pfb_dnsbl_prune.py ./001_inputs .fat .pruned --method pointer
 echo -e "\nCompare pointer output to benchmark:"
-/usr/bin/mv ./001_inputs/*.pruned ./test_pointer_out/
-/usr/bin/find -type f -name '*.pruned' | /usr/bin/rename 's/\.pruned$/.txt/'
-/usr/bin/diff -rq ./001_bench_pointer/ ./test_pointer_out/
+\mv ./001_inputs/*.pruned ./test_pointer_out/
+\find -type f -name '*.pruned' | \rename 's/\.pruned$/.txt/'
+\diff -rq ./001_bench_pointer/ ./test_pointer_out/
 ret=$?
 if [[ $ret -eq 0 ]]; then
     echo "001 pointer: zero diffences"
@@ -49,7 +49,7 @@ for f in ./test_standard_out/*.txt; do
     sort ${f} > ./test_standard_sorted/${base}.sorted
 done
 
-/usr/bin/diff -rq ./test_pointer_sorted ./test_standard_sorted
+\diff -rq ./test_pointer_sorted ./test_standard_sorted
 ret=$?
 if [[ $ret -eq 0 ]]; then
     echo "001 standard vs. pointer: zero diffences"
